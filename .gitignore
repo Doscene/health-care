@@ -1,1 +1,193 @@
+# ============================================
+# IDE & Editor
+# ============================================
 /.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+*.code-workspace
+.classpath
+.project
+.settings/
+
+# ============================================
+# Gradle
+# ============================================
+/.gradle/
+**/.gradle/
+gradle-app.setting
+**/build/
+**/bin/
+**/intermediates/
+**/outputs/
+**/tmp/
+!gradle/wrapper/*.jar
+!android/gradle/wrapper/*.jar
+
+# ============================================
+# Android
+# ============================================
+*.apk
+*.ap_
+*.aab
+*.dex
+*.class
+*.hprof
+**/gen/
+**/captures/
+**/androidTestPreview/
+**/testPreview/
+**/lint-results*.xml
+**/lint-results*.html
+local.properties
+*.keystore
+*.jks
+*.p12
+*.pem
+*.key
+**/secrets/
+**/credentials/
+
+# NDK
+obj/
+externalNativeBuild/
+.cxx/
+
+# Fastlane
+**/fastlane/report.xml
+**/fastlane/Preview.html
+**/fastlane/screenshots
+**/fastlane/test_output
+
+# Bundletool
+**/app-debug.apks
+
+# Crashlytics
+**/crashlytics-build.properties
+**/fabric.properties
+
+# ============================================
+# Server (NestJS)
+# ============================================
+server/node_modules/
+server/dist/
+server/.env
+server/.env.local
+server/.env.*.local
+server/npm-debug.log*
+server/yarn-debug.log*
+server/yarn-error.log*
+server/.npm
+server/.yarn-integrity
+server/.pnp
+server/.pnp.js
+server/.turbo
+server/.next
+server/.vercel
+server/*.tsbuildinfo
+server/coverage/
+server/.nyc_output/
+server/debug-*
+server/dump.rdb
+
+# ============================================
+# OS Generated Files
+# ============================================
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+Thumbs.db
+desktop.ini
+.directory
+.Trash-*
+
+# ============================================
+# Logs
+# ============================================
+*.log
+**/logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# ============================================
+# Temporary Files
+# ============================================
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+*.pid
+*.seed
+*.pid.lock
+
+# ============================================
+# Cache
+# ============================================
+.cache/
+.parcel-cache/
+.eslintcache
+
+# ============================================
+# Build Artifacts
+# ============================================
+*.jar
+*.war
+*.ear
+*.aar
+**/target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+
+# ============================================
+# Environment Variables
+# ============================================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# ============================================
+# SSL Certificates
+# ============================================
+*.crt
+*.cer
+*.pfx
+
+# ============================================
+# Windows
+# ============================================
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.dll
+*.exe
+*.sys
+*.tlb
+*.tli
+*.tlh
+*.bat
+*.cmd
+
+# ============================================
+# Kotlin Backup Files
+# ============================================
+*.kt_bak
+
+# ============================================
+# Protobuf
+# ============================================
+**/grpc/

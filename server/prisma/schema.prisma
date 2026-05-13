@@ -1,0 +1,226 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  phone     String   @unique @db.VarChar(20)
+  name      String   @db.VarChar(50)
+  avatar    String?  @db.VarChar(500)
+  selfRole  String   @db.VarChar(20)
+  age       Int?
+  diseases  Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memberships  FamilyMember[]
+  medications  Medication[]
+  bpRecords    BloodPressureRecord[]
+  bgRecords    BloodSugarRecord[]
+  appointments Appointment[]
+}
+
+model Family {
+  id               String    @id @default(uuid())
+  name             String    @db.VarChar(100)
+  creatorId        String
+  inviteCode       String?   @db.VarChar(10)
+  inviteCodeExpire DateTime?
+  memberCount      Int       @default(1)
+  createdAt        DateTime  @default(now())
+
+  members FamilyMember[]
+  goals   FamilyGoal[]
+}
+
+model FamilyMember {
+  id         String   @id @default(uuid())
+  familyId   String
+  userId     String
+  role       String   @db.VarChar(20)
+  nickname   String?  @db.VarChar(30)
+  visibility Json
+  joinedAt   DateTime @default(now())
+
+  family Family @relation(fields: [familyId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@unique([familyId, userId])
+}
+
+model Medication {
+  id              String   @id @default(uuid())
+  userId          String
+  name            String   @db.VarChar(200)
+  specification   String   @db.VarChar(100)
+  dosagePerTime   Int
+  frequencyPerDay Int
+  timeSlots       Json
+  remindTimes     Json
+  startDate       DateTime
+  endDate         DateTime?
+  status          String   @default("active") @db.VarChar(20)
+  notes           String?  @db.Text
+
+  user    User               @relation(fields: [userId], references: [id])
+  records MedicationRecord[]
+
+  @@index([userId])
+}
+
+model MedicationRecord {
+  id            String    @id @default(uuid())
+  medicationId  String
+  userId        String
+  scheduledTime DateTime
+  actualTime    DateTime?
+  status        String    @default("pending") @db.VarChar(20)
+  confirmedBy   String?   @db.VarChar(20)
+
+  medication Medication @relation(fields: [medicationId], references: [id])
+
+  @@index([userId, scheduledTime])
+}
+
+model BloodPressureRecord {
+  id          String   @id @default(uuid())
+  userId      String
+  systolic    Int
+  diastolic   Int
+  heartRate   Int?
+  inputMethod String   @db.VarChar(20)
+  source      String?  @db.VarChar(500)
+  recordedAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, recordedAt])
+}
+
+model BloodSugarRecord {
+  id          String   @id @default(uuid())
+  userId      String
+  type        String   @db.VarChar(30)
+  value       Decimal  @db.Decimal(4, 1)
+  inputMethod String   @db.VarChar(20)
+  source      String?  @db.VarChar(500)
+  recordedAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, recordedAt])
+}
+
+model RiskAlert {
+  id               String   @id @default(uuid())
+  userId           String
+  level            String   @db.VarChar(10)
+  triggerType      String   @db.VarChar(30)
+  triggerValue     String   @db.VarChar(100)
+  status           String   @default("active") @db.VarChar(20)
+  notifiedContacts Json
+  createdAt        DateTime @default(now())
+
+  @@index([userId, level, status])
+}
+
+model EmergencyContact {
+  id        String  @id @default(uuid())
+  userId    String
+  name      String  @db.VarChar(50)
+  phone     String  @db.VarChar(20)
+  relation  String  @db.VarChar(30)
+  priority  Int     @default(0)
+  isMutual  Boolean @default(false)
+}
+
+model Appointment {
+  id           String   @id @default(uuid())
+  userId       String
+  department   String   @db.VarChar(50)
+  hospital     String   @db.VarChar(100)
+  date         DateTime
+  notes        String?  @db.Text
+  remindBefore Int      @default(3)
+  status       String   @default("upcoming") @db.VarChar(20)
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, date])
+}
+
+model FamilyGoal {
+  id             String   @id @default(uuid())
+  familyId       String
+  type           String   @db.VarChar(30)
+  title          String   @db.VarChar(200)
+  targetValue    Float
+  currentValue   Float    @default(0)
+  unit           String   @db.VarChar(20)
+  participantIds Json
+  startDate      DateTime
+  endDate        DateTime
+  achieved       Boolean  @default(false)
+
+  family Family @relation(fields: [familyId], references: [id])
+}
+
+model Recipe {
+  id               String  @id @default(uuid())
+  name             String  @db.VarChar(100)
+  image            String? @db.VarChar(500)
+  sodium           Float
+  glycemicIndex    String  @db.VarChar(10)
+  calories         Int
+  suitableFor      Json
+  servings         Int
+  ingredients      Json
+  steps            Json
+  substitutionTips Json
+}
+
+model DietRecord {
+  id          String   @id @default(uuid())
+  userId      String
+  mealType    String   @db.VarChar(20)
+  imageUrl    String?  @db.VarChar(500)
+  description String?  @db.VarChar(500)
+  recordedAt  DateTime @default(now())
+}
+
+model KnowledgeArticle {
+  id          String   @id @default(uuid())
+  title       String   @db.VarChar(200)
+  category    String   @db.VarChar(30)
+  subCategory String   @db.VarChar(30)
+  content     String   @db.Text
+  coverImage  String?  @db.VarChar(500)
+  tags        Json
+  publishedAt DateTime @default(now())
+  viewCount   Int      @default(0)
+}
+
+model CommunityGroup {
+  id          String @id @default(uuid())
+  name        String @db.VarChar(100)
+  description String @db.Text
+  memberCount Int    @default(0)
+  tags        Json
+  isActive    Boolean @default(true)
+}
+
+model UserAchievement {
+  id            String    @id @default(uuid())
+  userId        String
+  achievementId String    @db.VarChar(50)
+  progress      Float     @default(0)
+  target        Float
+  unlockedAt    DateTime?
+
+  @@unique([userId, achievementId])
+}
