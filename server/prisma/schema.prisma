@@ -18,11 +18,15 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  memberships  FamilyMember[]
-  medications  Medication[]
-  bpRecords    BloodPressureRecord[]
-  bgRecords    BloodSugarRecord[]
-  appointments Appointment[]
+  memberships      FamilyMember[]
+  medications      Medication[]
+  bpRecords        BloodPressureRecord[]
+  bgRecords        BloodSugarRecord[]
+  appointments     Appointment[]
+  emergencyContacts EmergencyContact[]
+  riskAlerts       RiskAlert[]
+  dietRecords      DietRecord[]
+  achievements     UserAchievement[]
 }
 
 model Family {
@@ -126,6 +130,8 @@ model RiskAlert {
   notifiedContacts Json
   createdAt        DateTime @default(now())
 
+  user User @relation(fields: [userId], references: [id])
+
   @@index([userId, level, status])
 }
 
@@ -137,6 +143,8 @@ model EmergencyContact {
   relation  String  @db.VarChar(30)
   priority  Int     @default(0)
   isMutual  Boolean @default(false)
+
+  user User @relation(fields: [userId], references: [id])
 }
 
 model Appointment {
@@ -191,6 +199,8 @@ model DietRecord {
   imageUrl    String?  @db.VarChar(500)
   description String?  @db.VarChar(500)
   recordedAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
 }
 
 model KnowledgeArticle {
@@ -221,6 +231,8 @@ model UserAchievement {
   progress      Float     @default(0)
   target        Float
   unlockedAt    DateTime?
+
+  user User @relation(fields: [userId], references: [id])
 
   @@unique([userId, achievementId])
 }
