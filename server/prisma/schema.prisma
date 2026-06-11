@@ -236,3 +236,11 @@ model UserAchievement {
 
   @@unique([userId, achievementId])
 }
+
+model VerificationCode {
+  phone     String   @id @db.VarChar(20)
+  code      String   @db.VarChar(6)
+  expiresAt DateTime
+  attempts  Int      @default(0)
+  createdAt DateTime @default(now())
+}
