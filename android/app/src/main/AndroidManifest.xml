@@ -38,5 +38,22 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- JPush SDK 5.x 必需组件 -->
+        <receiver
+            android:name="cn.jpush.android.service.JPushMessageReceiver"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="cn.jpush.android.intent.RECEIVE_MESSAGE" />
+                <category android:name="${applicationId}" />
+            </intent-filter>
+        </receiver>
+
+        <service
+            android:name="cn.jpush.android.service.JCoreService"
+            android:enabled="true"
+            android:exported="false"
+            android:process=":core" />
     </application>
 </manifest>
