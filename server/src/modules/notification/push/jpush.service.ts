@@ -132,6 +132,11 @@ export class JPushService {
         });
       });
 
+      req.setTimeout(10000, () => {
+        req.destroy(new Error('Request timeout'));
+        reject(new Error('JPush API request timeout'));
+      });
+
       req.on('error', reject);
       req.write(JSON.stringify(body));
       req.end();

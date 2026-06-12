@@ -12,7 +12,7 @@ class HealthCareApp : Application() {
     }
 
     private fun initJPush() {
-        JPushInterface.setDebugMode(true)
+        JPushInterface.setDebugMode(BuildConfig.DEBUG)
         JPushInterface.init(this)
     }
 }
