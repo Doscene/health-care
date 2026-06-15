@@ -1,0 +1,287 @@
+// Jenkinsfile - 健康管理服务端自动部署流水线
+// 使用方式：在 Jenkins 中创建 Pipeline 项目，指向此文件
+
+pipeline {
+    agent any
+
+    // 环境变量
+    environment {
+        // Docker 镜像配置
+        DOCKER_IMAGE = 'healthcare-server'
+        DOCKER_REGISTRY = 'your-registry.com'  // 替换为你的镜像仓库地址
+        DOCKER_CREDENTIALS_ID = 'docker-credentials'  // Jenkins 中配置的凭据 ID
+
+        // 服务器部署配置
+        DEPLOY_HOST = '61.184.13.91'  // 替换为部署服务器 IP
+        DEPLOY_USER = 'deploy'  // 部署用户
+        DEPLOY_CREDENTIALS_ID = '668d8ca4-2fcb-4a9e-87e4-52b2fe053da7'  // Jenkins 中配置的 SSH 凭据 ID
+        DEPLOY_PATH = '/opt/healthcare/server'
+
+        // 应用配置
+        APP_PORT = '3000'
+        NODE_ENV = 'production'
+    }
+
+    // 构建参数
+    parameters {
+        choice(name: 'DEPLOY_ENV', choices: ['dev', 'staging', 'prod'], description: '部署环境')
+        booleanParam(name: 'SKIP_TESTS', defaultValue: false, description: '跳过测试')
+        booleanParam(name: 'FORCE_DEPLOY', defaultValue: false, description: '强制部署（跳过确认）')
+    }
+
+    // 构建工具
+    tools {
+        nodejs 'NodeJS-20'  // Jenkins 中配置的 NodeJS 工具名称
+    }
+
+    // 流水线选项
+    options {
+        timeout(time: 30, unit: 'MINUTES')  // 超时时间
+        disableConcurrentBuilds()  // 禁止并发构建
+        buildDiscarder(logRotator(numToKeepStr: '10'))  // 保留最近 10 次构建
+        timestamps()  // 显示时间戳
+    }
+
+    stages {
+        // 阶段 1: 检出代码
+        stage('Checkout') {
+            steps {
+                echo '========== 检出代码 =========='
+                checkout scm
+                script {
+                    env.GIT_COMMIT_SHORT = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+                    env.GIT_COMMIT_MSG = sh(script: 'git log -1 --pretty=%B', returnStdout: true).trim()
+                    env.BUILD_VERSION = "${env.BUILD_NUMBER}-${env.GIT_COMMIT_SHORT}"
+                }
+                echo "构建版本: ${env.BUILD_VERSION}"
+                echo "提交信息: ${env.GIT_COMMIT_MSG}"
+            }
+        }
+
+        // 阶段 2: 安装依赖
+        stage('Install Dependencies') {
+            steps {
+                echo '========== 安装依赖 =========='
+                dir('server') {
+                    sh 'npm ci --production=false'
+                }
+            }
+        }
+
+        // 阶段 3: 代码检查
+        stage('Code Lint') {
+            steps {
+                echo '========== 代码检查 =========='
+                dir('server') {
+                    sh 'npm run lint || true'  // 允许 lint 失败，不阻断构建
+                }
+            }
+        }
+
+        // 阶段 4: 运行测试
+        stage('Test') {
+            when {
+                expression { return !params.SKIP_TESTS }
+            }
+            steps {
+                echo '========== 运行测试 =========='
+                dir('server') {
+                    sh 'npm run test -- --passWithNoTests || true'
+                }
+            }
+        }
+
+        // 阶段 5: 构建应用
+        stage('Build') {
+            steps {
+                echo '========== 构建应用 =========='
+                dir('server') {
+                    sh 'npm run build'
+                    sh 'ls -la dist/'
+                }
+            }
+        }
+
+        // 阶段 6: 构建 Docker 镜像
+        stage('Docker Build') {
+            steps {
+                echo '========== 构建 Docker 镜像 =========='
+                dir('server') {
+                    script {
+                        // 构建镜像
+                        sh """
+                            docker build \
+                                --build-arg NODE_ENV=${NODE_ENV} \
+                                --build-arg BUILD_VERSION=${env.BUILD_VERSION} \
+                                -t ${DOCKER_IMAGE}:${env.BUILD_VERSION} \
+                                -t ${DOCKER_IMAGE}:latest \
+                                .
+                        """
+                    }
+                }
+            }
+        }
+
+        // 阶段 7: 推送镜像（可选，如果配置了镜像仓库）
+        stage('Docker Push') {
+            when {
+                expression { return DOCKER_REGISTRY != 'your-registry.com' }
+            }
+            steps {
+                echo '========== 推送镜像 =========='
+                script {
+                    withCredentials([usernamePassword(
+                        credentialsId: env.DOCKER_CREDENTIALS_ID,
+                        usernameVariable: 'DOCKER_USER',
+                        passwordVariable: 'DOCKER_PASS'
+                    )]) {
+                        sh """
+                            echo \$DOCKER_PASS | docker login ${DOCKER_REGISTRY} -u \$DOCKER_USER --password-stdin
+                            docker tag ${DOCKER_IMAGE}:${env.BUILD_VERSION} ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:${env.BUILD_VERSION}
+                            docker tag ${DOCKER_IMAGE}:latest ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:latest
+                            docker push ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:${env.BUILD_VERSION}
+                            docker push ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:latest
+                        """
+                    }
+                }
+            }
+        }
+
+        // 阶段 8: 确认部署（生产环境）
+        stage('Confirm Deploy') {
+            when {
+                allOf {
+                    expression { return params.DEPLOY_ENV == 'prod' }
+                    expression { return !params.FORCE_DEPLOY }
+                }
+            }
+            steps {
+                script {
+                    timeout(time: 5, unit: 'MINUTES') {
+                        input message: """
+                            |即将部署到生产环境！
+                            |构建版本: ${env.BUILD_VERSION}
+                            |提交信息: ${env.GIT_COMMIT_MSG}
+                            |确认继续？
+                        """.stripMargin()
+                    }
+                }
+            }
+        }
+
+        // 阶段 9: 部署到服务器
+        stage('Deploy') {
+            steps {
+                echo '========== 部署服务 =========='
+                script {
+                    // 保存镜像为 tar 文件
+                    sh "docker save ${DOCKER_IMAGE}:${env.BUILD_VERSION} | gzip > ${DOCKER_IMAGE}.tar.gz"
+
+                    // 通过 SSH 部署到目标服务器
+                    withCredentials([sshUserPrivateKey(
+                        credentialsId: env.DEPLOY_CREDENTIALS_ID,
+                        keyFileVariable: 'SSH_KEY',
+                        usernameVariable: 'SSH_USER'
+                    )]) {
+                        // 传输文件
+                        sh """
+                            scp -i \$SSH_KEY -o StrictHostKeyChecking=no \
+                                ${DOCKER_IMAGE}.tar.gz \
+                                ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/
+                        """
+
+                        // 执行部署脚本
+                        sh """
+                            ssh -i \$SSH_KEY -o StrictHostKeyChecking=no \
+                                ${DEPLOY_USER}@${DEPLOY_HOST} \
+                                'cd ${DEPLOY_PATH} && \
+                                 bash deploy.sh ${DOCKER_IMAGE} ${env.BUILD_VERSION} ${APP_PORT} ${params.DEPLOY_ENV}'
+                        """
+                    }
+
+                    // 清理本地镜像文件
+                    sh "rm -f ${DOCKER_IMAGE}.tar.gz"
+                }
+            }
+        }
+
+        // 阶段 10: 健康检查
+        stage('Health Check') {
+            steps {
+                echo '========== 健康检查 =========='
+                script {
+                    // 等待服务启动
+                    sleep(time: 10, unit: 'SECONDS')
+
+                    // 检查服务是否正常
+                    def maxRetries = 5
+                    def retryCount = 0
+                    def healthCheckPassed = false
+
+                    while (retryCount < maxRetries && !healthCheckPassed) {
+                        try {
+                            sh """
+                                curl -f -s http://${DEPLOY_HOST}:${APP_PORT}/api/health || exit 1
+                            """
+                            healthCheckPassed = true
+                            echo '✅ 健康检查通过'
+                        } catch (Exception e) {
+                            retryCount++
+                            echo "⚠️ 健康检查失败，重试 ${retryCount}/${maxRetries}"
+                            sleep(time: 5, unit: 'SECONDS')
+                        }
+                    }
+
+                    if (!healthCheckPassed) {
+                        error('❌ 健康检查失败，部署可能存在问题')
+                    }
+                }
+            }
+        }
+
+        // 阶段 11: 清理旧镜像
+        stage('Cleanup') {
+            steps {
+                echo '========== 清理资源 =========='
+                // 清理本地悬空镜像
+                sh 'docker image prune -f || true'
+            }
+        }
+    }
+
+    // 构建后操作
+    post {
+        success {
+            echo """
+                |========================================
+                |✅ 部署成功！
+                |构建版本: ${env.BUILD_VERSION}
+                |部署环境: ${params.DEPLOY_ENV}
+                |访问地址: http://${DEPLOY_HOST}:${APP_PORT}
+                |API 文档: http://${DEPLOY_HOST}:${APP_PORT}/api/docs
+                |========================================
+            """.stripMargin()
+
+            // 可选：发送成功通知
+            // slackSend(color: 'good', message: "✅ 部署成功: ${env.BUILD_VERSION} -> ${params.DEPLOY_ENV}")
+        }
+
+        failure {
+            echo """
+                |========================================
+                |❌ 部署失败！
+                |构建版本: ${env.BUILD_VERSION}
+                |请检查构建日志排查问题
+                |========================================
+            """.stripMargin()
+
+            // 可选：发送失败通知
+            // slackSend(color: 'danger', message: "❌ 部署失败: ${env.BUILD_VERSION} -> ${params.DEPLOY_ENV}")
+        }
+
+        always {
+            // 清理工作空间
+            cleanWs()
+        }
+    }
+}
