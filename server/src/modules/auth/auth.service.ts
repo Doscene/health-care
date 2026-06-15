@@ -20,6 +20,20 @@ export class AuthService {
   }
 
   async sendCode(phone: string): Promise<{ message: string }> {
+    // 如果用户未注册，则自动注册
+    let user = await this.prisma.user.findUnique({ where: { phone } });
+    if (!user) {
+      user = await this.prisma.user.create({
+        data: {
+          phone,
+          name: `用户${phone.slice(-4)}`,
+          selfRole: 'patient',
+          diseases: [],
+        },
+      });
+      this.logger.log(`新用户自动注册: ${phone} -> ${user.id}`);
+    }
+
     const code = this.generateCode();
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
@@ -78,10 +92,11 @@ export class AuthService {
 
     await this.prisma.verificationCode.delete({ where: { phone } });
 
-    return this.generateTokens(user.id, user.phone);
+    const tokens = this.generateTokens(user.id, user.phone);
+    return { ...tokens, userId: user.id };
   }
 
-  generateTokens(userId: string, phone: string): TokenResponseDto {
+  private generateTokens(userId: string, phone: string): Omit<TokenResponseDto, 'userId'> {
     const payload = { sub: userId, phone };
 
     const accessExpiresIn: JwtSignOptions['expiresIn'] = this.configService.get(
@@ -113,7 +128,8 @@ export class AuthService {
       if (!user) {
         throw new UnauthorizedException('用户不存在');
       }
-      return this.generateTokens(user.id, user.phone);
+      const tokens = this.generateTokens(user.id, user.phone);
+      return { ...tokens, userId: user.id };
     } catch {
       throw new UnauthorizedException('Refresh Token 无效或已过期');
     }

@@ -143,4 +143,60 @@ export class MedicationController {
       message: 'ok',
     };
   }
+
+  // ==================== 冲突检测 / 日历 / 依从性 ====================
+
+  @Post('conflicts')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: '检测多药冲突' })
+  async checkConflicts(
+    @CurrentUser() user: UserPayload,
+    @Body() body: { medicationIds: string[] },
+  ) {
+    return {
+      code: 0,
+      data: await this.medicationService.checkConflicts(
+        user.id,
+        body.medicationIds,
+      ),
+      message: 'ok',
+    };
+  }
+
+  @Get('calendar')
+  @ApiOperation({ summary: '获取服药日历（月视图）' })
+  async getCalendar(
+    @CurrentUser() user: UserPayload,
+    @Query('year') year?: string,
+    @Query('month') month?: string,
+    @Query('medicationId') medicationId?: string,
+  ) {
+    const now = new Date();
+    return {
+      code: 0,
+      data: await this.medicationService.getCalendar(
+        user.id,
+        year ? parseInt(year) : now.getFullYear(),
+        month ? parseInt(month) : now.getMonth() + 1,
+        medicationId,
+      ),
+      message: 'ok',
+    };
+  }
+
+  @Get('adherence')
+  @ApiOperation({ summary: '获取用药依从性统计' })
+  async getAdherence(
+    @CurrentUser() user: UserPayload,
+    @Query('days') days?: string,
+  ) {
+    return {
+      code: 0,
+      data: await this.medicationService.getAdherence(
+        user.id,
+        days ? parseInt(days) : 30,
+      ),
+      message: 'ok',
+    };
+  }
 }

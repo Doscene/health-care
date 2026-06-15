@@ -42,6 +42,7 @@ import com.healthcare.family.data.remote.api.PatientHomeDto
 @Composable
 fun YoungHomeContent(
     onNavigate: (String) -> Unit,
+    onAlertClick: ((com.healthcare.family.data.remote.api.AlertSummaryDto) -> Unit)? = null,
     patientHome: PatientHomeDto? = null,
     isLoading: Boolean = false,
 ) {
@@ -190,7 +191,9 @@ fun YoungHomeContent(
         if (alerts.isNotEmpty()) {
             item {
                 Card(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { alerts.firstOrNull()?.let { onAlertClick?.invoke(it) } },
                     shape = RoundedCornerShape(12.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = Color(0xFFFFF7ED),

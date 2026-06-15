@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.healthcare.family.data.local.TokenManager
 import com.healthcare.family.data.remote.api.UserDto
+import com.healthcare.family.data.remote.interceptor.AuthInterceptor
 import com.healthcare.family.data.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,6 +25,7 @@ data class ProfileUiState(
 class ProfileViewModel @Inject constructor(
     private val userRepository: UserRepository,
     private val tokenManager: TokenManager,
+    private val authInterceptor: AuthInterceptor,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProfileUiState())
@@ -50,6 +52,7 @@ class ProfileViewModel @Inject constructor(
     fun logout() {
         viewModelScope.launch {
             tokenManager.clearAll()
+            authInterceptor.accessToken = null
             _uiState.update { it.copy(loggedOut = true) }
         }
     }

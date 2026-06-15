@@ -13,6 +13,7 @@ import com.healthcare.family.ui.diet.SubstitutionScreen
 import com.healthcare.family.ui.family.CreateFamilyScreen
 import com.healthcare.family.ui.family.InviteMemberScreen
 import com.healthcare.family.ui.family.JoinFamilyScreen
+import com.healthcare.family.ui.kit.FirstAidKitScreen
 import com.healthcare.family.ui.medication.MedicationScreen
 import com.healthcare.family.ui.onboarding.RoleSelectionScreen
 import com.healthcare.family.ui.plan.AddPlanScreen
@@ -113,6 +114,11 @@ fun AppNavGraph(
         // 紧急联系人
         composable("profile/contacts") {
             EmergencyContactScreen(onBack = { navController.popBackStack() })
+        }
+
+        // 急救包管理
+        composable("profile/kit") {
+            FirstAidKitScreen(onBack = { navController.popBackStack() })
         }
 
         // 隐私设置

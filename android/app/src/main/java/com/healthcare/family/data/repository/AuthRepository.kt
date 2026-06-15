@@ -43,6 +43,7 @@ class AuthRepository @Inject constructor(
             val response = authApi.login(LoginRequest(phone, code))
             if ((response.code == 0 || response.code == 200) && response.data != null) {
                 tokenManager.saveTokens(response.data.accessToken, response.data.refreshToken)
+                response.data.userId?.let { tokenManager.saveUserId(it) }
                 authInterceptor.accessToken = response.data.accessToken
                 Result.success(response.data)
             } else {

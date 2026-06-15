@@ -26,6 +26,7 @@ model User {
   emergencyContacts EmergencyContact[]
   riskAlerts       RiskAlert[]
   dietRecords      DietRecord[]
+  firstAidKit      FirstAidKit[]
   achievements     UserAchievement[]
 }
 
@@ -91,6 +92,14 @@ model MedicationRecord {
   @@index([userId, scheduledTime])
 }
 
+model MedicationConflict {
+  id     String @id @default(uuid())
+  drugA  String @db.VarChar(200)
+  drugB  String @db.VarChar(200)
+  severity String @db.VarChar(10)
+  description String @db.Text
+}
+
 model BloodPressureRecord {
   id          String   @id @default(uuid())
   userId      String
@@ -129,10 +138,51 @@ model RiskAlert {
   status           String   @default("active") @db.VarChar(20)
   notifiedContacts Json
   createdAt        DateTime @default(now())
+  resolvedAt       DateTime?
+
+  user     User          @relation(fields: [userId], references: [id])
+  inquiry  RiskInquiry[]
+
+  @@index([userId, level, status])
+}
+
+model RiskInquiry {
+  id         String   @id @default(uuid())
+  alertId    String
+  question   String   @db.VarChar(500)
+  options    Json
+  answer     String?  @db.VarChar(200)
+  answeredAt DateTime?
+  createdAt  DateTime @default(now())
+
+  alert RiskAlert @relation(fields: [alertId], references: [id])
+
+  @@index([alertId])
+}
+
+model FirstAidKit {
+  id       String @id @default(uuid())
+  userId   String
+  name     String @db.VarChar(100)
+  type     String @db.VarChar(20)
+  quantity Int    @default(1)
+  expireDate DateTime?
+  notes    String? @db.VarChar(500)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id])
 
-  @@index([userId, level, status])
+  @@index([userId])
+}
+
+model FirstAidGuide {
+  id      String @id @default(uuid())
+  type    String @db.VarChar(30)
+  title   String @db.VarChar(200)
+  content String @db.Text
+  steps   Json
+  order   Int    @default(0)
 }
 
 model EmergencyContact {

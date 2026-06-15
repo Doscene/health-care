@@ -21,6 +21,6 @@ enum class BottomTab(
     HOME("home", "首页", Icons.Default.Home),
     FAMILY("family", "家庭", Icons.Default.FavoriteBorder),
     DIET("diet", "饮食", Icons.Default.MenuBook),
-    DISCOVER("discover", "发现", Icons.Default.Search, visibleForRoles = setOf("PATIENT")),
+    DISCOVER("discover", "发现", Icons.Default.Search, visibleForRoles = setOf("patient")),
     PROFILE("profile", "我的", Icons.Default.Person),
 }

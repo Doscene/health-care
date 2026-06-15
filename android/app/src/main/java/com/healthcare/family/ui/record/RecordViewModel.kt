@@ -131,6 +131,34 @@ class RecordViewModel @Inject constructor(
         }
     }
 
+    fun deleteBpRecord(recordId: String) {
+        viewModelScope.launch {
+            recordRepository.deleteBpRecord(recordId).fold(
+                onSuccess = {
+                    _uiState.update { it.copy(successMessage = "已删除") }
+                    loadRecentRecords()
+                },
+                onFailure = { e ->
+                    _uiState.update { it.copy(errorMessage = e.message) }
+                },
+            )
+        }
+    }
+
+    fun deleteBgRecord(recordId: String) {
+        viewModelScope.launch {
+            recordRepository.deleteBgRecord(recordId).fold(
+                onSuccess = {
+                    _uiState.update { it.copy(successMessage = "已删除") }
+                    loadRecentRecords()
+                },
+                onFailure = { e ->
+                    _uiState.update { it.copy(errorMessage = e.message) }
+                },
+            )
+        }
+    }
+
     fun clearMessages() {
         _uiState.update { it.copy(errorMessage = null, successMessage = null) }
     }

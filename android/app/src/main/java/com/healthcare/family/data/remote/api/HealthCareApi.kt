@@ -161,6 +161,13 @@ interface HealthCareApi {
         @Body request: UpdateAlertStatusRequest,
     ): ApiResponse<Unit>
 
+    /** 提交问询回答 */
+    @POST("alert/{alertId}/inquiry")
+    suspend fun submitInquiry(
+        @Path("alertId") alertId: String,
+        @Body request: InquiryResponseDto,
+    ): ApiResponse<InquiryResponseDto>
+
     /** 添加紧急联系人 */
     @POST("alert/contact")
     suspend fun addEmergencyContact(@Body request: AddContactRequest): ApiResponse<ContactDto>
@@ -179,6 +186,30 @@ interface HealthCareApi {
     /** 删除紧急联系人 */
     @DELETE("alert/contact/{contactId}")
     suspend fun deleteEmergencyContact(@Path("contactId") contactId: String): ApiResponse<Unit>
+
+    /** 设为互为紧急联系人 */
+    @POST("alert/contact/mutual")
+    suspend fun setMutualContact(@Body request: MutualContactRequest): ApiResponse<Unit>
+
+    // ==================== 急救包 ====================
+
+    /** 获取急救包物品列表 */
+    @GET("alert/kit")
+    suspend fun getFirstAidKit(): ApiResponse<List<FirstAidKitDto>>
+
+    /** 添加急救包物品 */
+    @POST("alert/kit")
+    suspend fun addFirstAidItem(@Body request: FirstAidKitRequest): ApiResponse<FirstAidKitDto>
+
+    /** 删除急救包物品 */
+    @DELETE("alert/kit/{itemId}")
+    suspend fun deleteFirstAidItem(@Path("itemId") itemId: String): ApiResponse<Unit>
+
+    // ==================== 急救指南 ====================
+
+    /** 获取急救指南 */
+    @GET("alert/guide")
+    suspend fun getEmergencyGuides(@Query("type") type: String? = null): ApiResponse<List<FirstAidGuideDto>>
 
     // ==================== 饮食管理 ====================
 
@@ -514,4 +545,41 @@ data class SubstitutionItem(
     val original: String,
     val substitute: String,
     val reason: String,
+)
+
+// ==================== 新增 DTOs (Phase 2) ====================
+
+data class InquiryResponseDto(
+    val answer: String,
+)
+
+data class MutualContactRequest(
+    val targetUserId: String,
+)
+
+data class FirstAidKitDto(
+    val id: String,
+    val name: String,
+    val type: String,
+    val quantity: Int,
+    val expireDate: String? = null,
+    val notes: String? = null,
+    val createdAt: String,
+)
+
+data class FirstAidKitRequest(
+    val name: String,
+    val type: String,
+    val quantity: Int = 1,
+    val expireDate: String? = null,
+    val notes: String? = null,
+)
+
+data class FirstAidGuideDto(
+    val id: String,
+    val type: String,
+    val title: String,
+    val content: String,
+    val steps: Any? = null,
+    val order: Int = 0,
 )

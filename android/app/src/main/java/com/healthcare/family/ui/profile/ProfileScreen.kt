@@ -19,8 +19,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.LocalHospital
 import androidx.compose.material.icons.filled.MedicalServices
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.PrivacyTip
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Share
@@ -136,6 +138,12 @@ fun ProfileScreen(
                         icon = Icons.Default.Share,
                         title = "数据导出",
                         onClick = { /* TODO: Phase 4 数据导出 */ },
+                    )
+                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+                    ProfileMenuItem(
+                        icon = Icons.Default.LocalHospital,
+                        title = "急救包管理",
+                        onClick = { onNavigate("profile/kit") },
                     )
                     HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                     ProfileMenuItem(

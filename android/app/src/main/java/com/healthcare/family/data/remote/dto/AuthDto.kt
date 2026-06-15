@@ -22,6 +22,7 @@ data class RefreshTokenRequest(
 data class TokenResponse(
     @SerializedName("accessToken") val accessToken: String,
     @SerializedName("refreshToken") val refreshToken: String,
+    @SerializedName("userId") val userId: String? = null,
 )
 
 /** 发送验证码响应 */

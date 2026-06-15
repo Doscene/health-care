@@ -27,4 +27,7 @@ export class TokenResponseDto {
 
   @ApiProperty()
   refreshToken: string;
+
+  @ApiProperty({ description: '用户ID（新用户自动注册时也会返回）' })
+  userId: string;
 }

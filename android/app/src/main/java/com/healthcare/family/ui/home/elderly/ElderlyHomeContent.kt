@@ -19,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -28,8 +29,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.healthcare.family.data.remote.api.AlertSummaryDto
 import com.healthcare.family.data.remote.api.PatientHomeDto
 
 /**
@@ -38,6 +41,7 @@ import com.healthcare.family.data.remote.api.PatientHomeDto
 @Composable
 fun ElderlyHomeContent(
     onNavigate: (String) -> Unit,
+    onAlertClick: ((AlertSummaryDto) -> Unit)? = null,
     patientHome: PatientHomeDto? = null,
     isLoading: Boolean = false,
 ) {
@@ -133,12 +137,72 @@ fun ElderlyHomeContent(
 
         // 今日待办
         val meds = patientHome?.todayMedications ?: emptyList()
-        item {
-            Text(
-                text = "今日待办",
-                style = MaterialTheme.typography.titleLarge,
-            )
+        val alerts = patientHome?.activeAlerts ?: emptyList()
+
+        // 预警提示（老人端）
+        if (alerts.isNotEmpty()) {
+            item {
+                val redAlerts = alerts.filter { it.level == "red" }
+                val orangeAlerts = alerts.filter { it.level == "orange" }
+                val highestLevel = when {
+                    redAlerts.isNotEmpty() -> "red"
+                    orangeAlerts.isNotEmpty() -> "orange"
+                    else -> "yellow"
+                }
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { redAlerts.firstOrNull()?.let { onAlertClick?.invoke(it) } },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = when (highestLevel) {
+                            "red" -> Color(0xFFFEE2E2)
+                            "orange" -> Color(0xFFFFF7ED)
+                            else -> Color(0xFFFEFCE8)
+                        },
+                    ),
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Warning,
+                            contentDescription = null,
+                            tint = when (highestLevel) {
+                                "red" -> Color(0xFFDC2626)
+                                "orange" -> Color(0xFFB45309)
+                                else -> Color(0xFFCA8A04)
+                            },
+                            modifier = Modifier.size(28.dp),
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = when (highestLevel) {
+                                    "red" -> "⚠ ${redAlerts.size}条危险预警！请立即关注"
+                                    "orange" -> "⚠ ${alerts.size}条健康提醒"
+                                    else -> "💡 ${alerts.size}条健康建议"
+                                },
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                            )
+                            alerts.take(2).forEach { alert ->
+                                Text(
+                                    text = alert.triggerValue,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
+                    }
+                }
+            }
         }
+
+        // 今日待办
 
         if (meds.isEmpty() && !isLoading) {
             item {

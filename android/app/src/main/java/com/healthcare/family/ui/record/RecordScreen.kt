@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -15,6 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -31,12 +33,14 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -115,6 +119,7 @@ fun RecordScreen(
                     onDiastolicChanged = viewModel::onDiastolicChanged,
                     onHeartRateChanged = viewModel::onHeartRateChanged,
                     onSubmit = viewModel::submitBpRecord,
+                    onDeleteBp = viewModel::deleteBpRecord,
                 )
                 1 -> BloodSugarTab(
                     bgType = uiState.bgType,
@@ -124,6 +129,7 @@ fun RecordScreen(
                     onBgTypeChanged = viewModel::onBgTypeChanged,
                     onBgValueChanged = viewModel::onBgValueChanged,
                     onSubmit = viewModel::submitBgRecord,
+                    onDeleteBg = viewModel::deleteBgRecord,
                 )
             }
         }
@@ -141,6 +147,7 @@ private fun BloodPressureTab(
     onDiastolicChanged: (String) -> Unit,
     onHeartRateChanged: (String) -> Unit,
     onSubmit: () -> Unit,
+    onDeleteBp: (String) -> Unit = {},
 ) {
     LazyColumn(
         modifier = Modifier
@@ -206,7 +213,10 @@ private fun BloodPressureTab(
                 Text("最近记录", style = MaterialTheme.typography.titleMedium)
             }
             items(recentRecords) { record ->
-                BpRecordItem(record)
+                BpRecordItem(
+                    record = record,
+                    onDelete = { onDeleteBp(record.id) },
+                )
             }
         }
     }
@@ -221,6 +231,7 @@ private fun BloodSugarTab(
     onBgTypeChanged: (String) -> Unit,
     onBgValueChanged: (String) -> Unit,
     onSubmit: () -> Unit,
+    onDeleteBg: (String) -> Unit = {},
 ) {
     val typeOptions = listOf(
         "fasting" to "空腹",
@@ -299,14 +310,17 @@ private fun BloodSugarTab(
                 Text("最近记录", style = MaterialTheme.typography.titleMedium)
             }
             items(recentRecords) { record ->
-                BgRecordItem(record)
+                BgRecordItem(
+                    record = record,
+                    onDelete = { onDeleteBg(record.id) },
+                )
             }
         }
     }
 }
 
 @Composable
-private fun BpRecordItem(record: BpRecordDto) {
+private fun BpRecordItem(record: BpRecordDto, onDelete: () -> Unit = {}) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(8.dp),
@@ -333,12 +347,20 @@ private fun BpRecordItem(record: BpRecordDto) {
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.outline,
             )
+            IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
+                Icon(
+                    Icons.Default.Delete,
+                    contentDescription = "删除",
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(18.dp),
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun BgRecordItem(record: BgRecordDto) {
+private fun BgRecordItem(record: BgRecordDto, onDelete: () -> Unit = {}) {
     val typeLabel = when (record.type) {
         "fasting" -> "空腹"
         "before_meal" -> "餐前"
@@ -371,6 +393,14 @@ private fun BgRecordItem(record: BgRecordDto) {
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.outline,
             )
+            IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
+                Icon(
+                    Icons.Default.Delete,
+                    contentDescription = "删除",
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(18.dp),
+                )
+            }
         }
     }
 }

@@ -1,10 +1,14 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service.js';
+import { AlertService } from '../alert/alert.service.js';
 import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class RecordService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly alertService: AlertService,
+  ) {}
 
   // ==================== 血压记录 ====================
 
@@ -19,7 +23,7 @@ export class RecordService {
       throw new BadRequestException('舒张压数值异常');
     }
 
-    return this.prisma.bloodPressureRecord.create({
+    const record = await this.prisma.bloodPressureRecord.create({
       data: {
         id: uuidv4(),
         userId,
@@ -29,6 +33,15 @@ export class RecordService {
         inputMethod: data.inputMethod ?? 'manual',
       },
     });
+
+    // 触发风险评估
+    await this.alertService.evaluateAndAlert(userId, {
+      type: 'bp',
+      systolic: data.systolic,
+      diastolic: data.diastolic,
+    });
+
+    return record;
   }
 
   async getBpRecords(userId: string, limit = 30) {
@@ -63,7 +76,7 @@ export class RecordService {
       throw new BadRequestException('血糖数值异常');
     }
 
-    return this.prisma.bloodSugarRecord.create({
+    const record = await this.prisma.bloodSugarRecord.create({
       data: {
         id: uuidv4(),
         userId,
@@ -72,6 +85,15 @@ export class RecordService {
         inputMethod: data.inputMethod ?? 'manual',
       },
     });
+
+    // 触发风险评估
+    await this.alertService.evaluateAndAlert(userId, {
+      type: 'bg',
+      bgType: data.type,
+      bgValue: data.value,
+    });
+
+    return record;
   }
 
   async getBgRecords(userId: string, limit = 30) {

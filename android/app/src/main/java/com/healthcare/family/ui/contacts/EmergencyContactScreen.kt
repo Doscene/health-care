@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -46,6 +47,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -58,6 +60,7 @@ import com.healthcare.family.data.remote.api.ContactDto
 @Composable
 fun EmergencyContactScreen(
     onBack: () -> Unit,
+    onEmergencyCall: (() -> Unit)? = null,
     viewModel: EmergencyContactViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -119,6 +122,26 @@ fun EmergencyContactScreen(
                 Text("暂无紧急联系人", style = MaterialTheme.typography.bodyLarge)
                 Spacer(modifier = Modifier.height(8.dp))
                 Text("添加联系人以便紧急时快速联络", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(modifier = Modifier.height(24.dp))
+                // 一键呼救按钮
+                if (onEmergencyCall != null) {
+                    Button(
+                        onClick = onEmergencyCall,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDC2626)),
+                    ) {
+                        Icon(
+                            Icons.Default.Phone,
+                            contentDescription = null,
+                            modifier = Modifier.size(24.dp),
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("一键呼救", style = MaterialTheme.typography.titleMedium)
+                    }
+                }
             }
         } else {
             LazyColumn(
