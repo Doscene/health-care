@@ -1,16 +1,22 @@
 package com.healthcare.family.data.remote.interceptor
 
-import android.content.SharedPreferences
 import okhttp3.Interceptor
 import okhttp3.Response
 import javax.inject.Inject
+import javax.inject.Singleton
 
-class AuthInterceptor @Inject constructor(
-    private val prefs: SharedPreferences,
-) : Interceptor {
+/**
+ * 自动在请求头添加 JWT Authorization。
+ * 使用内存中的 volatile token，由 TokenManager 在登录/登出时同步更新。
+ */
+@Singleton
+class AuthInterceptor @Inject constructor() : Interceptor {
+
+    @Volatile
+    var accessToken: String? = null
 
     override fun intercept(chain: Interceptor.Chain): Response {
-        val token = prefs.getString(KEY_JWT_TOKEN, null)
+        val token = accessToken
         val request = if (!token.isNullOrEmpty()) {
             chain.request().newBuilder()
                 .addHeader(HEADER_AUTHORIZATION, "$TOKEN_PREFIX $token")
@@ -22,7 +28,6 @@ class AuthInterceptor @Inject constructor(
     }
 
     companion object {
-        const val KEY_JWT_TOKEN = "jwt_access_token"
         private const val HEADER_AUTHORIZATION = "Authorization"
         private const val TOKEN_PREFIX = "Bearer"
     }

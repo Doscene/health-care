@@ -1,86 +1,135 @@
 package com.healthcare.family.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.healthcare.family.MainActivity
+import com.healthcare.family.data.local.TokenManager
+import com.healthcare.family.ui.auth.LoginScreen
+import com.healthcare.family.ui.family.CreateFamilyScreen
+import com.healthcare.family.ui.family.JoinFamilyScreen
+import com.healthcare.family.ui.onboarding.RoleSelectionScreen
+import com.healthcare.family.ui.plan.AddPlanScreen
+import com.healthcare.family.ui.plan.PlanListScreen
+import com.healthcare.family.ui.profile.PrivacyScreen
 
 /**
- * 全量导航图。
- * 当前Phase 0仅含占位，后续Phase逐页添加路由。
+ * 全量导航图：登录 → 角色选择 → 主界面(底部Tab) → 详情页。
  */
 @Composable
-fun NavGraph(navController: NavHostController) {
+fun AppNavGraph(
+    navController: NavHostController,
+    tokenManager: TokenManager,
+    isLoggedIn: Boolean,
+) {
+    val startDestination = if (isLoggedIn) "main" else "login"
+
     NavHost(
         navController = navController,
-        startDestination = "home"
+        startDestination = startDestination,
     ) {
-        // Phase 1: 首页 (三角色)
-        composable("home") {
-            // TODO: Phase 1 实现 HomeScreen
+        // 登录
+        composable("login") {
+            LoginScreen(
+                onLoginSuccess = {
+                    // 登录成功后直接进入主界面，角色选择改为可选引导
+                    navController.navigate("main") {
+                        popUpTo("login") { inclusive = true }
+                    }
+                },
+            )
         }
 
-        // Phase 1: 家庭圈
-        composable("family") {
-            // TODO: Phase 1 实现 FamilyScreen
-        }
-        composable("family/member/{userId}") {
-            // TODO: Phase 1 实现 MemberDetailScreen
+        // 角色选择
+        composable("role_selection") {
+            RoleSelectionScreen(
+                onRoleConfirmed = { _, _ ->
+                    navController.navigate("main") {
+                        popUpTo("role_selection") { inclusive = true }
+                    }
+                },
+            )
         }
 
-        // Phase 3: 饮食
-        composable("diet") {
-            // TODO: Phase 3 实现 DietScreen
+        // 主界面（底部Tab）
+        composable("main") {
+            MainScreen(
+                tokenManager = tokenManager,
+                onNavigateToDetail = { route ->
+                    navController.navigate(route)
+                },
+            )
+        }
+
+        // 家庭圈详情
+        composable("family/create") {
+            CreateFamilyScreen(
+                onBack = { navController.popBackStack() },
+                onFamilyCreated = { navController.popBackStack() },
+            )
+        }
+        composable("family/join") {
+            JoinFamilyScreen(
+                onBack = { navController.popBackStack() },
+                onJoined = { navController.popBackStack() },
+            )
+        }
+        composable("family/invite") {
+            PlaceholderScreen("邀请成员")
+        }
+
+        // 快速记录
+        composable("record") {
+            PlaceholderScreen("快速记录")
+        }
+
+        // 用药表
+        composable("profile/medications") {
+            PlaceholderScreen("我的用药表")
+        }
+
+        // 复诊计划
+        composable("profile/plans") {
+            PlanListScreen(
+                onBack = { navController.popBackStack() },
+                onAddPlan = { navController.navigate("profile/plans/add") },
+            )
+        }
+        composable("profile/plans/add") {
+            AddPlanScreen(
+                onBack = { navController.popBackStack() },
+                onPlanAdded = { navController.popBackStack() },
+            )
+        }
+
+        // 紧急联系人
+        composable("profile/contacts") {
+            PlaceholderScreen("紧急联系人")
+        }
+
+        // 隐私设置
+        composable("profile/privacy") {
+            PrivacyScreen(
+                tokenManager = tokenManager,
+                onBack = { navController.popBackStack() },
+            )
+        }
+
+        // 健康周报
+        composable("report/weekly") {
+            PlaceholderScreen("健康周报")
+        }
+
+        // 饮食详情
+        composable("diet/menu") {
+            PlaceholderScreen("今日菜单")
+        }
+        composable("diet/substitution") {
+            PlaceholderScreen("食材替换")
         }
         composable("diet/recipe/{id}") {
-            // TODO: Phase 3 实现 RecipeDetailScreen
-        }
-        composable("diet/menu") {
-            // TODO: Phase 3 实现 DailyMenuScreen
-        }
-
-        // Phase 5: 发现 (仅年轻患者)
-        composable("discover") {
-            // TODO: Phase 5 实现 DiscoverScreen
-        }
-        composable("discover/article/{id}") {
-            // TODO: Phase 5 实现 ArticleDetailScreen
-        }
-        composable("discover/group/{id}") {
-            // TODO: Phase 5 实现 CommunityGroupScreen
-        }
-
-        // Phase 1: 我的
-        composable("profile") {
-            // TODO: Phase 1 实现 ProfileScreen
-        }
-        composable("profile/medications") {
-            // TODO: Phase 1 实现 MedicationListScreen
-        }
-        composable("profile/medications/add") {
-            // TODO: Phase 2 实现 AddMedicationScreen
-        }
-        composable("profile/privacy") {
-            // TODO: Phase 1 实现 PrivacySettingsScreen
-        }
-        composable("profile/contacts") {
-            // TODO: Phase 2 实现 EmergencyContactsScreen
-        }
-
-        // Phase 2: 快速记录 (全局，不在Tab内)
-        composable("record") {
-            // TODO: Phase 2 实现 RecordScreen
-        }
-
-        // Phase 4: 周报 (全局)
-        composable("report/weekly") {
-            // TODO: Phase 4 实现 WeeklyReportScreen
-        }
-
-        // Phase 6: 新手引导 (首次)
-        composable("onboarding") {
-            // TODO: Phase 6 实现 OnboardingScreen
+            PlaceholderScreen("食谱详情")
         }
     }
 }

@@ -1,6 +1,6 @@
 services:
   mysql:
-    image: mysql:8.0
+    image:  swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/mysql:8.0.36
     container_name: healthcare-mysql
     restart: unless-stopped
     ports:
@@ -22,7 +22,7 @@ services:
       - healthcare-net
 
   redis:
-    image: redis:7-alpine
+    image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/redis:7-alpine
     container_name: healthcare-redis
     restart: unless-stopped
     ports:
@@ -39,7 +39,7 @@ services:
       - healthcare-net
 
   minio:
-    image: minio/minio:latest
+    image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/minio/minio:latest
     container_name: healthcare-minio
     restart: unless-stopped
     ports:

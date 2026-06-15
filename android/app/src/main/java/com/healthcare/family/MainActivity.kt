@@ -6,27 +6,39 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextAlign
+import androidx.navigation.compose.rememberNavController
+import com.healthcare.family.data.local.TokenManager
+import com.healthcare.family.navigation.AppNavGraph
 import com.healthcare.family.ui.theme.HealthCareTheme
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    @Inject
+    lateinit var tokenManager: TokenManager
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            HealthCareTheme {
+            val isElderlyMode by tokenManager.isElderlyMode.collectAsState(initial = false)
+
+            HealthCareTheme(isElderlyMode = isElderlyMode) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
+                    color = MaterialTheme.colorScheme.background,
                 ) {
-                    Text(
-                        text = "家庭健康\nHealthCare v1.0.0",
-                        style = MaterialTheme.typography.headlineMedium,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxSize()
+                    val navController = rememberNavController()
+                    val isLoggedIn by tokenManager.isLoggedIn.collectAsState(initial = false)
+
+                    AppNavGraph(
+                        navController = navController,
+                        tokenManager = tokenManager,
+                        isLoggedIn = isLoggedIn,
                     )
                 }
             }

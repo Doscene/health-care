@@ -2,6 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!-- 网络权限 -->
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
+
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
@@ -13,7 +17,8 @@
 
     <!-- 存储权限 -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="28" />
 
     <!-- 推送 -->
@@ -27,8 +32,10 @@
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="家庭健康"
+        android:networkSecurityConfig="@xml/network_security_config"
         android:theme="@style/Theme.HealthCare">
-
+        <meta-data android:name="JPUSH_CHANNEL" android:value="${JPUSH_CHANNEL}" />
+        <meta-data android:name="JPUSH_APPKEY" android:value="${JPUSH_APPKEY}" />
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -41,7 +48,7 @@
 
         <!-- JPush SDK 5.x 必需组件 -->
         <receiver
-            android:name="cn.jpush.android.service.JPushMessageReceiver"
+            android:name="com.healthcare.family.receiver.JMessageReceiver"
             android:enabled="true"
             android:exported="false">
             <intent-filter>
@@ -49,11 +56,19 @@
                 <category android:name="${applicationId}" />
             </intent-filter>
         </receiver>
-
-        <service
-            android:name="cn.jpush.android.service.JCoreService"
+<!--        <service
+            android:name="com.healthcare.family.service.JCoreService"
             android:enabled="true"
             android:exported="false"
-            android:process=":core" />
+            android:process=":core" />-->
+        <service
+            android:name="com.healthcare.family.service.JCoreService"
+            android:enabled="true"
+            android:exported="false"
+            android:process=":pushcore">
+            <intent-filter>
+                <action android:name="cn.jiguang.user.service.action" />
+            </intent-filter>
+        </service>
     </application>
 </manifest>

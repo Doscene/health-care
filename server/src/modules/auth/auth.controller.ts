@@ -15,7 +15,12 @@ export class AuthController {
   @ApiOperation({ summary: '发送短信验证码' })
   @ApiResponse({ status: 200, description: '验证码已发送' })
   async sendCode(@Body() dto: SendCodeDto) {
-    return this.authService.sendCode(dto.phone);
+    const result = await this.authService.sendCode(dto.phone);
+    return {
+      code: 0,
+      data: result,
+      message: 'ok',
+    };
   }
 
   @Post('login')
@@ -28,7 +33,12 @@ export class AuthController {
     type: TokenResponseDto,
   })
   async login(@Body() dto: LoginDto) {
-    return this.authService.login(dto.phone, dto.code);
+    const result = await this.authService.login(dto.phone, dto.code);
+    return {
+      code: 0,
+      data: result,
+      message: 'ok',
+    };
   }
 
   @Post('refresh')
@@ -41,6 +51,11 @@ export class AuthController {
     type: TokenResponseDto,
   })
   async refresh(@Body('refreshToken') refreshToken: string) {
-    return this.authService.refreshToken(refreshToken);
+    const result = await this.authService.refreshToken(refreshToken);
+    return {
+      code: 0,
+      data: result,
+      message: 'ok',
+    };
   }
 }

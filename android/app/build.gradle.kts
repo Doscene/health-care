@@ -5,6 +5,20 @@ plugins {
     id("com.google.devtools.ksp")
 }
 
+// 从 local.properties 读取敏感配置
+val jpushAppKey: String by lazy {
+    val propsFile = rootProject.file("local.properties")
+    if (propsFile.exists()) {
+        propsFile.readLines()
+            .firstOrNull { it.startsWith("JPUSH_APPKEY=") }
+            ?.substringAfter("=")
+            ?.trim()
+            ?: "your_app_key_here"
+    } else {
+        "your_app_key_here"
+    }
+}
+
 android {
     namespace = "com.healthcare.family"
     compileSdk = 34
@@ -22,6 +36,11 @@ android {
         }
 
         buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:3000/api/\"")
+
+        // JPush 配置从 local.properties 读取，不要硬编码
+        manifestPlaceholders["JPUSH_PKGNAME"] = "$applicationId"
+        manifestPlaceholders["JPUSH_CHANNEL"] = "developer-default"
+        manifestPlaceholders["JPUSH_APPKEY"] = jpushAppKey
     }
 
     buildTypes {
@@ -57,6 +76,8 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+
+
 }
 
 dependencies {
@@ -115,9 +136,7 @@ dependencies {
     ksp("androidx.hilt:hilt-compiler:1.1.0")
 
     // JPush
-    implementation("cn.jiguang.sdk:jpush:5.1.0")
-    implementation("cn.jiguang.sdk:jcore:4.0.0")
-
+    implementation("cn.jiguang.sdk:jpush:5.6.0")
     // Testing
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")

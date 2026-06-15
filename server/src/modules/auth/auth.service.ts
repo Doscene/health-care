@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import type { JwtSignOptions } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
@@ -28,7 +29,10 @@ export class AuthService {
       create: { phone, code, expiresAt },
     });
 
-    console.log(`[SMS] Phone: ${phone}, Code: ${code}`);
+    // 仅开发环境输出验证码到日志
+    if (this.configService.get('NODE_ENV') !== 'production') {
+      this.logger.debug(`[SMS] Phone: ${phone}, Code: ${code}`);
+    }
 
     return { message: '验证码已发送' };
   }
