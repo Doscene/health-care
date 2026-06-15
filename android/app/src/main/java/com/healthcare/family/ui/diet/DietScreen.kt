@@ -15,25 +15,41 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MenuBook
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.healthcare.family.data.remote.api.RecipeDto
 
 /**
- * 饮食页：食谱推荐、食材替换、今日菜单。
+ * 饮食主页面：快捷入口 + 推荐食谱列表。
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DietScreen(onNavigate: (String) -> Unit) {
+fun DietScreen(
+    onNavigate: (String) -> Unit,
+    viewModel: DietViewModel = hiltViewModel(),
+) {
+    val uiState by viewModel.uiState.collectAsState()
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -79,23 +95,28 @@ fun DietScreen(onNavigate: (String) -> Unit) {
             )
         }
 
-        items(recommendedRecipes) { recipe ->
+        if (uiState.recipes.isEmpty()) {
+            item {
+                Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)) {
+                    Text(
+                        text = "暂无食谱数据",
+                        modifier = Modifier.padding(24.dp),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        }
+
+        items(uiState.recipes) { recipe ->
             RecipeCard(recipe = recipe, onClick = { onNavigate("diet/recipe/${recipe.id}") })
         }
     }
 }
 
-private data class Recipe(val id: String, val name: String, val tags: List<String>, val calories: String)
-
-private val recommendedRecipes = listOf(
-    Recipe("1", "清蒸鲈鱼", listOf("低盐", "高蛋白"), "180 kcal"),
-    Recipe("2", "凉拌木耳", listOf("低糖", "降压"), "95 kcal"),
-    Recipe("3", "番茄鸡蛋汤", listOf("低脂", "家常"), "120 kcal"),
-)
-
 @Composable
-private fun DietQuickCard(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+fun DietQuickCard(
+    icon: ImageVector,
     title: String,
     subtitle: String,
     onClick: () -> Unit,
@@ -131,7 +152,7 @@ private fun DietQuickCard(
 }
 
 @Composable
-private fun RecipeCard(recipe: Recipe, onClick: () -> Unit) {
+fun RecipeCard(recipe: RecipeDto, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -145,7 +166,7 @@ private fun RecipeCard(recipe: Recipe, onClick: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
-                imageVector = Icons.Default.MenuBook,
+                imageVector = Icons.AutoMirrored.Filled.MenuBook,
                 contentDescription = null,
                 modifier = Modifier.size(40.dp),
                 tint = MaterialTheme.colorScheme.primary,
@@ -158,7 +179,7 @@ private fun RecipeCard(recipe: Recipe, onClick: () -> Unit) {
                     fontWeight = FontWeight.Medium,
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    recipe.tags.forEach { tag ->
+                    recipe.suitableFor.forEach { tag ->
                         Text(
                             text = tag,
                             style = MaterialTheme.typography.labelSmall,
@@ -168,7 +189,7 @@ private fun RecipeCard(recipe: Recipe, onClick: () -> Unit) {
                 }
             }
             Text(
-                text = recipe.calories,
+                text = "${recipe.calories} kcal",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

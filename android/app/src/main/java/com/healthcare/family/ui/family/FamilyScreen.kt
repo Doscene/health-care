@@ -1,5 +1,9 @@
 package com.healthcare.family.ui.family
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,24 +27,35 @@ import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.healthcare.family.data.remote.api.MemberDto
 
 /**
  * 家庭圈页面：家庭成员列表、邀请码展示、创建/加入家庭。
  */
 @Composable
-fun FamilyScreen(onNavigate: (String) -> Unit) {
+fun FamilyScreen(
+    onNavigate: (String) -> Unit,
+    viewModel: FamilyViewModel = hiltViewModel(),
+) {
+    val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -65,21 +80,104 @@ fun FamilyScreen(onNavigate: (String) -> Unit) {
             }
         }
 
-        // 邀请码卡片
-        item {
-            InviteCodeCard(inviteCode = "ABC123")
+        // 加载状态
+        if (uiState.isLoading && uiState.families.isEmpty()) {
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
+        }
+
+        // 错误提示
+        if (uiState.errorMessage != null) {
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                    ),
+                ) {
+                    Text(
+                        text = uiState.errorMessage ?: "",
+                        modifier = Modifier.padding(16.dp),
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                    )
+                }
+            }
+        }
+
+        // 邀请码卡片（取第一个家庭的邀请码）
+        val currentFamily = uiState.families.firstOrNull()
+        if (currentFamily != null) {
+            item {
+                InviteCodeCard(
+                    inviteCode = currentFamily.inviteCode ?: "无",
+                    onCopy = {
+                        copyToClipboard(context, currentFamily.inviteCode ?: "")
+                        Toast.makeText(context, "已复制邀请码", Toast.LENGTH_SHORT).show()
+                    },
+                )
+            }
+        }
+
+        // 家庭信息
+        if (currentFamily != null) {
+            item {
+                Text(
+                    text = "${currentFamily.name}（${currentFamily.memberCount}人）",
+                    style = MaterialTheme.typography.titleLarge,
+                )
+            }
         }
 
         // 家庭成员
-        item {
-            Text(
-                text = "家庭成员",
-                style = MaterialTheme.typography.titleLarge,
-            )
+        if (uiState.members.isNotEmpty()) {
+            items(uiState.members) { member ->
+                MemberCard(member = member)
+            }
+        } else if (!uiState.isLoading && currentFamily != null) {
+            item {
+                Text(
+                    text = "暂无成员信息",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
 
-        items(familyMembers) { member ->
-            MemberCard(member = member)
+        // 无家庭时的提示
+        if (!uiState.isLoading && uiState.families.isEmpty() && uiState.errorMessage == null) {
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Text(
+                            text = "您还没有加入任何家庭",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "创建或加入一个家庭，与家人一起管理健康",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
         }
 
         // 操作按钮
@@ -107,20 +205,8 @@ fun FamilyScreen(onNavigate: (String) -> Unit) {
     }
 }
 
-private data class FamilyMember(
-    val name: String,
-    val role: String,
-    val isOnline: Boolean,
-)
-
-private val familyMembers = listOf(
-    FamilyMember("爸爸", "高血压患者", true),
-    FamilyMember("妈妈", "糖尿病患者", false),
-    FamilyMember("小明", "子女", true),
-)
-
 @Composable
-private fun InviteCodeCard(inviteCode: String) {
+private fun InviteCodeCard(inviteCode: String, onCopy: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -149,7 +235,7 @@ private fun InviteCodeCard(inviteCode: String) {
             )
             Spacer(modifier = Modifier.height(8.dp))
             Row {
-                IconButton(onClick = { /* TODO: 复制 */ }) {
+                IconButton(onClick = onCopy) {
                     Icon(Icons.Default.ContentCopy, contentDescription = "复制")
                 }
             }
@@ -163,7 +249,7 @@ private fun InviteCodeCard(inviteCode: String) {
 }
 
 @Composable
-private fun MemberCard(member: FamilyMember) {
+private fun MemberCard(member: MemberDto) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
@@ -182,7 +268,7 @@ private fun MemberCard(member: FamilyMember) {
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    text = member.name.first().toString(),
+                    text = member.name.firstOrNull()?.toString() ?: "?",
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.primary,
                 )
@@ -194,17 +280,33 @@ private fun MemberCard(member: FamilyMember) {
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Medium,
                 )
+                val roleLabel = when (member.role) {
+                    "owner" -> "创建者"
+                    "member" -> "成员"
+                    "caregiver" -> "照护者"
+                    "viewer" -> "查看者"
+                    else -> member.role
+                }
                 Text(
-                    text = member.role,
+                    text = roleLabel,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            Text(
-                text = if (member.isOnline) "在线" else "离线",
-                style = MaterialTheme.typography.labelSmall,
-                color = if (member.isOnline) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
-            )
+            val diseases = member.diseases
+            if (diseases.isNotEmpty()) {
+                Text(
+                    text = diseases.joinToString("、"),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
         }
     }
+}
+
+private fun copyToClipboard(context: Context, text: String) {
+    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+    val clip = ClipData.newPlainText("邀请码", text)
+    clipboard.setPrimaryClip(clip)
 }

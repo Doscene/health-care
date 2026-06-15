@@ -17,8 +17,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.MedicalServices
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PrivacyTip
@@ -26,23 +26,45 @@ import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 
 /**
  * 我的页面：用户信息卡片、功能列表、版本号。
  */
 @Composable
-fun ProfileScreen(onNavigate: (String) -> Unit) {
+fun ProfileScreen(
+    onNavigate: (String) -> Unit,
+    onLogout: () -> Unit = {},
+    viewModel: ProfileViewModel = hiltViewModel(),
+) {
+    val uiState by viewModel.uiState.collectAsState()
+
+    // 登录失效后跳转登录页
+    LaunchedEffect(uiState.loggedOut) {
+        if (uiState.loggedOut) {
+            onLogout()
+        }
+    }
+
+    val user = uiState.user
+    val displayName = user?.name?.takeIf { it.isNotBlank() } ?: "用户"
+    val displayDisease = user?.diseases?.joinToString("、")?.takeIf { it.isNotBlank() } ?: "未设置"
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -60,7 +82,29 @@ fun ProfileScreen(onNavigate: (String) -> Unit) {
 
         // 用户信息卡片
         item {
-            UserInfoCard(name = "用户", disease = "高血压")
+            UserInfoCard(
+                name = displayName,
+                disease = displayDisease,
+                isLoading = uiState.isLoading,
+            )
+        }
+
+        // 加载错误
+        if (uiState.errorMessage != null) {
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                    ),
+                ) {
+                    Text(
+                        text = uiState.errorMessage ?: "",
+                        modifier = Modifier.padding(16.dp),
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                    )
+                }
+            }
         }
 
         // 功能列表
@@ -91,7 +135,7 @@ fun ProfileScreen(onNavigate: (String) -> Unit) {
                     ProfileMenuItem(
                         icon = Icons.Default.Share,
                         title = "数据导出",
-                        onClick = { /* TODO */ },
+                        onClick = { /* TODO: Phase 4 数据导出 */ },
                     )
                     HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                     ProfileMenuItem(
@@ -110,9 +154,9 @@ fun ProfileScreen(onNavigate: (String) -> Unit) {
                 shape = RoundedCornerShape(12.dp),
             ) {
                 ProfileMenuItem(
-                    icon = Icons.Default.ExitToApp,
+                    icon = Icons.AutoMirrored.Filled.ExitToApp,
                     title = "退出登录",
-                    onClick = { /* TODO: 退出登录 */ },
+                    onClick = { viewModel.logout() },
                 )
             }
         }
@@ -130,7 +174,7 @@ fun ProfileScreen(onNavigate: (String) -> Unit) {
 }
 
 @Composable
-private fun UserInfoCard(name: String, disease: String) {
+private fun UserInfoCard(name: String, disease: String, isLoading: Boolean) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -159,18 +203,25 @@ private fun UserInfoCard(name: String, disease: String) {
                 )
             }
             Spacer(modifier = Modifier.width(16.dp))
-            Column {
-                Text(
-                    text = name,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                )
-                Text(
-                    text = disease,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
-                )
+            Column(modifier = Modifier.weight(1f)) {
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        strokeWidth = 2.dp,
+                    )
+                } else {
+                    Text(
+                        text = name,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    )
+                    Text(
+                        text = disease,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
+                    )
+                }
             }
         }
     }

@@ -15,6 +15,7 @@ import javax.inject.Inject
 
 data class FamilyUiState(
     val families: List<FamilyDto> = emptyList(),
+    val selectedFamilyId: String? = null,
     val members: List<MemberDto> = emptyList(),
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
@@ -39,7 +40,18 @@ class FamilyViewModel @Inject constructor(
             _uiState.update { it.copy(isLoading = true) }
             familyRepository.getMyFamilies().fold(
                 onSuccess = { families ->
-                    _uiState.update { it.copy(families = families, isLoading = false) }
+                    val firstId = families.firstOrNull()?.id
+                    _uiState.update {
+                        it.copy(
+                            families = families,
+                            selectedFamilyId = firstId ?: it.selectedFamilyId,
+                            isLoading = false,
+                        )
+                    }
+                    // 自动加载第一个家庭的成员
+                    if (firstId != null) {
+                        loadMembers(firstId)
+                    }
                 },
                 onFailure = { e ->
                     _uiState.update { it.copy(isLoading = false, errorMessage = e.message) }

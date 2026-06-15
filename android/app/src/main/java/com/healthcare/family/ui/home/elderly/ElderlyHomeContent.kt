@@ -1,6 +1,5 @@
 package com.healthcare.family.ui.home.elderly
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,7 +14,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
@@ -23,21 +21,34 @@ import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.healthcare.family.data.remote.api.PatientHomeDto
 
 /**
  * 老人首页：问候语、今日待办、语音记录大按钮、最近指标。
  */
 @Composable
-fun ElderlyHomeContent(onNavigate: (String) -> Unit) {
+fun ElderlyHomeContent(
+    onNavigate: (String) -> Unit,
+    patientHome: PatientHomeDto? = null,
+    isLoading: Boolean = false,
+) {
+    val userName = patientHome?.user?.name ?: "用户"
+    val diseases = patientHome?.user?.diseases ?: emptyList()
+    val greeting = when {
+        java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY) < 12 -> "早上好"
+        java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY) < 18 -> "下午好"
+        else -> "晚上好"
+    }
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -53,12 +64,12 @@ fun ElderlyHomeContent(onNavigate: (String) -> Unit) {
             ) {
                 Column {
                     Text(
-                        text = "早上好",
+                        text = "$greeting，$userName",
                         style = MaterialTheme.typography.headlineLarge,
                         fontWeight = FontWeight.Bold,
                     )
                     Text(
-                        text = "今天也要照顾好自己哦",
+                        text = if (diseases.isNotEmpty()) diseases.joinToString("、") else "今天也要照顾好自己哦",
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -68,6 +79,20 @@ fun ElderlyHomeContent(onNavigate: (String) -> Unit) {
                     contentDescription = "通知",
                     modifier = Modifier.size(32.dp),
                 )
+            }
+        }
+
+        // 加载中
+        if (isLoading) {
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    CircularProgressIndicator()
+                }
             }
         }
 
@@ -107,6 +132,7 @@ fun ElderlyHomeContent(onNavigate: (String) -> Unit) {
         }
 
         // 今日待办
+        val meds = patientHome?.todayMedications ?: emptyList()
         item {
             Text(
                 text = "今日待办",
@@ -114,8 +140,48 @@ fun ElderlyHomeContent(onNavigate: (String) -> Unit) {
             )
         }
 
-        items(todayTasks) { task ->
-            TaskCard(task = task)
+        if (meds.isEmpty() && !isLoading) {
+            item {
+                Text(
+                    text = "暂无待服药物",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+
+        items(meds) { med ->
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CheckCircle,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.outline,
+                        modifier = Modifier.size(28.dp),
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = med.name,
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Medium,
+                        )
+                        Text(
+                            text = "${med.dosagePerTime}片/次，${med.frequencyPerDay}次/天",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
         }
 
         // 最近指标
@@ -131,62 +197,31 @@ fun ElderlyHomeContent(onNavigate: (String) -> Unit) {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
+                val bp = patientHome?.latestBp
+                val bg = patientHome?.latestBg
                 MetricCard(
                     title = "血压",
-                    value = "128/82",
+                    value = if (bp != null) "${bp.systolic}/${bp.diastolic}" else "--/--",
                     unit = "mmHg",
-                    status = "偏高",
+                    status = when {
+                        bp == null -> "暂无数据"
+                        bp.systolic >= 140 || bp.diastolic >= 90 -> "偏高"
+                        bp.systolic < 90 || bp.diastolic < 60 -> "偏低"
+                        else -> "正常"
+                    },
                     modifier = Modifier.weight(1f),
                 )
                 MetricCard(
                     title = "血糖",
-                    value = "6.2",
+                    value = bg?.value?.toString() ?: "--",
                     unit = "mmol/L",
-                    status = "正常",
+                    status = when {
+                        bg == null -> "暂无数据"
+                        bg.value > 7.0 -> "偏高"
+                        bg.value < 3.9 -> "偏低"
+                        else -> "正常"
+                    },
                     modifier = Modifier.weight(1f),
-                )
-            }
-        }
-    }
-}
-
-private data class TaskItem(val title: String, val time: String, val done: Boolean)
-
-private val todayTasks = listOf(
-    TaskItem("服用降压药", "08:00", true),
-    TaskItem("测量血压", "09:00", false),
-    TaskItem("服用降糖药", "12:00", false),
-)
-
-@Composable
-private fun TaskCard(task: TaskItem) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(
-                imageVector = Icons.Default.CheckCircle,
-                contentDescription = null,
-                tint = if (task.done) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
-                modifier = Modifier.size(28.dp),
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = task.title,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium,
-                )
-                Text(
-                    text = task.time,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }

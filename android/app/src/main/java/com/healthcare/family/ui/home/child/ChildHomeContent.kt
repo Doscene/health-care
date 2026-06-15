@@ -21,6 +21,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -30,12 +31,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.healthcare.family.data.remote.api.FamilyHomeDto
+import com.healthcare.family.data.remote.api.MemberHealthDto
 
 /**
  * 子女首页：问候语、父母健康卡片列表、周报入口。
  */
 @Composable
-fun ChildHomeContent(onNavigate: (String) -> Unit) {
+fun ChildHomeContent(
+    onNavigate: (String) -> Unit,
+    familyHome: FamilyHomeDto? = null,
+    isLoading: Boolean = false,
+) {
+    val allMembers = familyHome?.families?.flatMap { it.members } ?: emptyList()
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -56,7 +65,7 @@ fun ChildHomeContent(onNavigate: (String) -> Unit) {
                         fontWeight = FontWeight.Bold,
                     )
                     Text(
-                        text = "关注父母的健康状况",
+                        text = "关注家人的健康状况",
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -66,6 +75,21 @@ fun ChildHomeContent(onNavigate: (String) -> Unit) {
                     contentDescription = "通知",
                     modifier = Modifier.size(32.dp),
                 )
+            }
+        }
+
+        // 加载中
+        if (isLoading) {
+            item {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                    CircularProgressIndicator()
+                }
             }
         }
 
@@ -94,55 +118,66 @@ fun ChildHomeContent(onNavigate: (String) -> Unit) {
             }
         }
 
-        // 父母健康卡片
+        // 家庭成员健康卡片
         item {
             Text(
-                text = "父母健康",
+                text = "家人健康",
                 style = MaterialTheme.typography.titleLarge,
             )
         }
 
-        items(parentHealthCards) { parent ->
-            ParentHealthCard(parent = parent)
+        if (allMembers.isEmpty() && !isLoading) {
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                ) {
+                    Text(
+                        text = "暂无家庭成员数据，请先创建或加入家庭",
+                        modifier = Modifier.padding(24.dp),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        }
+
+        items(allMembers) { member ->
+            MemberHealthCard(member = member)
         }
     }
 }
 
-private data class ParentHealth(
-    val name: String,
-    val disease: String,
-    val status: String,
-    val statusColor: Color,
-    val metrics: List<Pair<String, String>>,
-    val hasAlert: Boolean,
-)
-
-private val parentHealthCards = listOf(
-    ParentHealth(
-        name = "爸爸",
-        disease = "高血压",
-        status = "控制中",
-        statusColor = Color(0xFF4ADE80),
-        metrics = listOf("血压" to "138/88", "心率" to "78", "服药" to "已服"),
-        hasAlert = false,
-    ),
-    ParentHealth(
-        name = "妈妈",
-        disease = "糖尿病",
-        status = "偏高",
-        statusColor = Color(0xFFFBBF24),
-        metrics = listOf("血糖" to "8.2", "血压" to "125/78", "服药" to "未服"),
-        hasAlert = true,
-    ),
-)
-
 @Composable
-private fun ParentHealthCard(parent: ParentHealth) {
+private fun MemberHealthCard(member: MemberHealthDto) {
+    val statusText = when {
+        member.hasHighAlert -> "需关注"
+        member.latestBp != null && (member.latestBp.systolic >= 140 || member.latestBp.diastolic >= 90) -> "偏高"
+        member.latestBg != null && member.latestBg.value > 7.0 -> "偏高"
+        else -> "控制中"
+    }
+    val statusColor = when (statusText) {
+        "需关注" -> Color(0xFFEF4444)
+        "偏高" -> Color(0xFFFBBF24)
+        else -> Color(0xFF4ADE80)
+    }
+
+    val metrics = mutableListOf<Pair<String, String>>()
+    if (member.latestBp != null) {
+        metrics.add("血压" to "${member.latestBp.systolic}/${member.latestBp.diastolic}")
+    }
+    if (member.latestBg != null) {
+        metrics.add("血糖" to "${member.latestBg.value}")
+    }
+    if (member.latestBp?.heartRate != null) {
+        metrics.add("心率" to "${member.latestBp.heartRate}")
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (parent.hasAlert) Color(0xFFFFFBEB) else MaterialTheme.colorScheme.surface,
+            containerColor = if (member.hasHighAlert) Color(0xFFFFFBEB) else MaterialTheme.colorScheme.surface,
         ),
     ) {
         Column(
@@ -157,48 +192,48 @@ private fun ParentHealthCard(parent: ParentHealth) {
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = parent.name,
+                        text = member.name,
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = parent.disease,
+                        text = member.diseases.joinToString("、").ifEmpty { member.selfRole },
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
                 Text(
-                    text = parent.status,
+                    text = statusText,
                     style = MaterialTheme.typography.labelLarge,
-                    color = parent.statusColor,
+                    color = statusColor,
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                parent.metrics.forEach { (label, value) ->
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = label,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        Text(
-                            text = value,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                        )
+            if (metrics.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    metrics.forEach { (label, value) ->
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = label,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            Text(
+                                text = value,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                            )
+                        }
                     }
                 }
             }
 
-            // 异常提示条
-            if (parent.hasAlert) {
+            if (member.hasHighAlert) {
                 Spacer(modifier = Modifier.height(12.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -212,7 +247,7 @@ private fun ParentHealthCard(parent: ParentHealth) {
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = "血糖偏高，建议关注饮食",
+                        text = "有${member.activeAlertCount}条风险预警，请关注",
                         style = MaterialTheme.typography.bodySmall,
                         color = Color(0xFFB45309),
                     )

@@ -2,6 +2,8 @@ import {
   Controller,
   Get,
   Post,
+  Put,
+  Delete,
   Body,
   Param,
   HttpCode,
@@ -85,6 +87,65 @@ export class FamilyController {
       code: 0,
       data: await this.familyService.regenerateInviteCode(familyId),
       message: '邀请码已更新',
+    };
+  }
+
+  @Put(':familyId/members/:memberId/role')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: '更新成员角色' })
+  async updateMemberRole(
+    @CurrentUser() user: UserPayload,
+    @Param('familyId') familyId: string,
+    @Param('memberId') memberId: string,
+    @Body() body: { role: string },
+  ) {
+    return {
+      code: 0,
+      data: await this.familyService.updateMemberRole(
+        familyId,
+        memberId,
+        user.id,
+        body.role,
+      ),
+      message: '角色更新成功',
+    };
+  }
+
+  @Put(':familyId/members/:memberId/nickname')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: '更新成员备注昵称' })
+  async updateMemberNickname(
+    @Param('familyId') familyId: string,
+    @Param('memberId') memberId: string,
+    @Body() body: { nickname: string },
+  ) {
+    return {
+      code: 0,
+      data: await this.familyService.updateMemberNickname(
+        familyId,
+        memberId,
+        body.nickname,
+      ),
+      message: '昵称更新成功',
+    };
+  }
+
+  @Delete(':familyId/members/:memberId')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: '移除家庭成员' })
+  async removeMember(
+    @CurrentUser() user: UserPayload,
+    @Param('familyId') familyId: string,
+    @Param('memberId') memberId: string,
+  ) {
+    return {
+      code: 0,
+      data: await this.familyService.removeMember(
+        familyId,
+        memberId,
+        user.id,
+      ),
+      message: '成员已移除',
     };
   }
 }

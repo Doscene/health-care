@@ -19,6 +19,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.healthcare.family.data.local.TokenManager
 import com.healthcare.family.ui.diet.DietScreen
+import com.healthcare.family.ui.discover.DiscoverScreen
 import com.healthcare.family.ui.family.FamilyScreen
 import com.healthcare.family.ui.home.HomeScreen
 import com.healthcare.family.ui.profile.ProfileScreen
@@ -30,6 +31,7 @@ import com.healthcare.family.ui.profile.ProfileScreen
 fun MainScreen(
     tokenManager: TokenManager,
     onNavigateToDetail: (String) -> Unit,
+    onLogout: () -> Unit = {},
 ) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -79,11 +81,10 @@ fun MainScreen(
                 DietScreen(onNavigate = onNavigateToDetail)
             }
             composable("discover") {
-                // TODO: Phase 5 发现页
-                PlaceholderScreen("发现")
+                DiscoverScreen(onNavigate = onNavigateToDetail)
             }
             composable("profile") {
-                ProfileScreen(onNavigate = onNavigateToDetail)
+                ProfileScreen(onNavigate = onNavigateToDetail, onLogout = onLogout)
             }
         }
     }

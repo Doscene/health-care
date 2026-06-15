@@ -9,6 +9,11 @@ import { UserModule } from './modules/user/user.module.js';
 import { FamilyModule } from './modules/family/family.module.js';
 import { AppointmentModule } from './modules/appointment/appointment.module.js';
 import { NotificationModule } from './modules/notification/notification.module.js';
+import { HomeModule } from './modules/home/home.module.js';
+import { RecordModule } from './modules/record/record.module.js';
+import { MedicationModule } from './modules/medication/medication.module.js';
+import { AlertModule } from './modules/alert/alert.module.js';
+import { DietModule } from './modules/diet/diet.module.js';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard.js';
 
 @Module({
@@ -20,6 +25,11 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard.js';
     FamilyModule,
     AppointmentModule,
     NotificationModule,
+    HomeModule,
+    RecordModule,
+    MedicationModule,
+    AlertModule,
+    DietModule,
   ],
   controllers: [AppController],
   providers: [

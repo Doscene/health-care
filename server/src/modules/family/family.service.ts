@@ -202,4 +202,125 @@ export class FamilyService {
       inviteCodeExpiresAt: family.inviteCodeExpire,
     };
   }
+
+  /** 更新成员角色 */
+  async updateMemberRole(
+    familyId: string,
+    memberId: string,
+    operatorId: string,
+    newRole: string,
+  ) {
+    // 校验操作者是否为该家庭的 owner
+    const operator = await this.prisma.familyMember.findUnique({
+      where: {
+        familyId_userId: { familyId, userId: operatorId },
+      },
+    });
+    if (!operator || operator.role !== 'owner') {
+      throw new BadRequestException('仅创建者可修改成员角色');
+    }
+
+    // 不能修改自己的角色
+    if (memberId === operatorId) {
+      throw new BadRequestException('不能修改自己的角色');
+    }
+
+    // 角色白名单
+    if (!FamilyService.ALLOWED_JOIN_ROLES.includes(newRole)) {
+      throw new BadRequestException(
+        `无效角色，允许值：${FamilyService.ALLOWED_JOIN_ROLES.join(', ')}`,
+      );
+    }
+
+    const member = await this.prisma.familyMember.findUnique({
+      where: {
+        familyId_userId: { familyId, userId: memberId },
+      },
+    });
+    if (!member) {
+      throw new NotFoundException('该成员不存在');
+    }
+
+    await this.prisma.familyMember.update({
+      where: {
+        familyId_userId: { familyId, userId: memberId },
+      },
+      data: { role: newRole },
+    });
+
+    return { message: '角色更新成功' };
+  }
+
+  /** 更新成员备注昵称 */
+  async updateMemberNickname(
+    familyId: string,
+    memberId: string,
+    nickname: string,
+  ) {
+    if (nickname && nickname.length > 30) {
+      throw new BadRequestException('昵称不能超过30个字符');
+    }
+
+    const member = await this.prisma.familyMember.findUnique({
+      where: {
+        familyId_userId: { familyId, userId: memberId },
+      },
+    });
+    if (!member) {
+      throw new NotFoundException('该成员不存在');
+    }
+
+    await this.prisma.familyMember.update({
+      where: {
+        familyId_userId: { familyId, userId: memberId },
+      },
+      data: { nickname: nickname || null },
+    });
+
+    return { message: '昵称更新成功' };
+  }
+
+  /** 移除家庭成员 */
+  async removeMember(
+    familyId: string,
+    memberId: string,
+    operatorId: string,
+  ) {
+    // 校验操作者是否为该家庭的 owner
+    const operator = await this.prisma.familyMember.findUnique({
+      where: {
+        familyId_userId: { familyId, userId: operatorId },
+      },
+    });
+    if (!operator || operator.role !== 'owner') {
+      throw new BadRequestException('仅创建者可移除成员');
+    }
+
+    // 不能移除自己
+    if (memberId === operatorId) {
+      throw new BadRequestException('不能移除自己，请使用解散家庭功能');
+    }
+
+    const member = await this.prisma.familyMember.findUnique({
+      where: {
+        familyId_userId: { familyId, userId: memberId },
+      },
+    });
+    if (!member) {
+      throw new NotFoundException('该成员不存在');
+    }
+
+    await this.prisma.familyMember.delete({
+      where: {
+        familyId_userId: { familyId, userId: memberId },
+      },
+    });
+
+    await this.prisma.family.update({
+      where: { id: familyId },
+      data: { memberCount: { decrement: 1 } },
+    });
+
+    return { message: '成员已移除' };
+  }
 }

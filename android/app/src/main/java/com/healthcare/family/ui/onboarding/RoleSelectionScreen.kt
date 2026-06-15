@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -25,6 +26,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -55,6 +57,15 @@ fun RoleSelectionScreen(
     var selectedRole by remember { mutableStateOf<UserRole?>(null) }
     var selectedDisease by remember { mutableStateOf<DiseaseType?>(null) }
     var familyName by remember { mutableStateOf("") }
+
+    val uiState by viewModel.uiState.collectAsState()
+
+    // 成功后跳转主界面
+    LaunchedEffect(uiState.success) {
+        if (uiState.success) {
+            onRoleConfirmed(selectedRole!!, if (selectedRole == UserRole.PATIENT) selectedDisease?.label else familyName.ifEmpty { null })
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -141,12 +152,12 @@ fun RoleSelectionScreen(
         Button(
             onClick = {
                 when (selectedRole) {
-                    UserRole.PATIENT -> onRoleConfirmed(UserRole.PATIENT, selectedDisease?.label)
-                    UserRole.FAMILY -> onRoleConfirmed(UserRole.FAMILY, familyName.ifEmpty { null })
+                    UserRole.PATIENT -> viewModel.saveRole(UserRole.PATIENT, selectedDisease?.label)
+                    UserRole.FAMILY -> viewModel.saveRole(UserRole.FAMILY, familyName.ifEmpty { null })
                     null -> {}
                 }
             },
-            enabled = selectedRole != null && (
+            enabled = selectedRole != null && !uiState.isLoading && (
                 (selectedRole == UserRole.PATIENT && selectedDisease != null) ||
                 (selectedRole == UserRole.FAMILY && familyName.isNotBlank())
             ),
@@ -154,7 +165,15 @@ fun RoleSelectionScreen(
                 .fillMaxWidth()
                 .height(52.dp),
         ) {
-            Text("确认", style = MaterialTheme.typography.titleMedium)
+            if (uiState.isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    strokeWidth = 2.dp,
+                )
+            } else {
+                Text("确认", style = MaterialTheme.typography.titleMedium)
+            }
         }
     }
 }
