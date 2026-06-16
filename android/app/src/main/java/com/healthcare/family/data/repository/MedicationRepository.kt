@@ -2,8 +2,10 @@ package com.healthcare.family.data.repository
 
 import com.healthcare.family.data.remote.api.AddMedicationRequest
 import com.healthcare.family.data.remote.api.HealthCareApi
+import com.healthcare.family.data.remote.api.MedicationCalendarRecordDto
 import com.healthcare.family.data.remote.api.MedicationDto
 import com.healthcare.family.data.remote.api.UpdateMedicationRequest
+import com.healthcare.family.ui.medication.MedicationCalendarRecord
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -56,6 +58,28 @@ class MedicationRepository @Inject constructor(
             val resp = api.deleteMedication(medicationId)
             if (resp.code == 0 || resp.code == 200) {
                 Result.success(Unit)
+            } else {
+                Result.failure(Exception(resp.message))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getCalendarData(year: Int, month: Int): Result<Map<String, List<MedicationCalendarRecord>>> {
+        return try {
+            val resp = api.getMedicationCalendar(year, month)
+            if ((resp.code == 0 || resp.code == 200) && resp.data != null) {
+                val result = resp.data.mapValues { (_, records) ->
+                    records.map { dto ->
+                        MedicationCalendarRecord(
+                            medicationName = dto.medicationName,
+                            status = dto.status,
+                            scheduledTime = dto.scheduledTime,
+                        )
+                    }
+                }
+                Result.success(result)
             } else {
                 Result.failure(Exception(resp.message))
             }

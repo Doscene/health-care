@@ -127,6 +127,16 @@ interface HealthCareApi {
     @DELETE("record/bg/{recordId}")
     suspend fun deleteBgRecord(@Path("recordId") recordId: String): ApiResponse<Unit>
 
+    // ==================== 语音识别 ====================
+
+    /** 语音识别 */
+    @POST("speech/recognize")
+    suspend fun recognizeVoice(@Body request: VoiceRecognizeRequest): ApiResponse<VoiceRecognizeResponse>
+
+    /** 语音识别并解析 */
+    @POST("speech/recognize-and-parse")
+    suspend fun recognizeAndParseVoice(@Body request: VoiceRecognizeRequest): ApiResponse<VoiceParseResponse>
+
     // ==================== 用药管理 ====================
 
     /** 获取用药列表 */
@@ -147,6 +157,13 @@ interface HealthCareApi {
     /** 删除用药计划 */
     @DELETE("medication/{medicationId}")
     suspend fun deleteMedication(@Path("medicationId") medicationId: String): ApiResponse<Unit>
+
+    /** 获取服药日历数据 */
+    @GET("medication/calendar")
+    suspend fun getMedicationCalendar(
+        @Query("year") year: Int,
+        @Query("month") month: Int,
+    ): ApiResponse<Map<String, List<MedicationCalendarRecordDto>>>
 
     // ==================== 风险预警 ====================
 
@@ -433,6 +450,39 @@ data class BgRecordDto(
     val recordedAt: String,
 )
 
+// ==================== 语音识别 DTOs ====================
+
+data class VoiceRecognizeRequest(
+    val audioBase64: String,
+    val format: String = "pcm",
+)
+
+data class VoiceRecognizeResponse(
+    val text: String,
+    val confidence: Double,
+    val language: String? = null,
+)
+
+data class VoiceParseResponse(
+    val recognize: VoiceRecognizeResponse,
+    val parse: ParsedHealthDataDto,
+)
+
+data class ParsedHealthDataDto(
+    val type: String,
+    val rawText: String,
+    val data: ParsedDataValue? = null,
+    val parsed: Boolean,
+)
+
+data class ParsedDataValue(
+    val systolic: Int? = null,
+    val diastolic: Int? = null,
+    val heartRate: Int? = null,
+    val type: String? = null,
+    val value: Double? = null,
+)
+
 // ==================== 用药管理 DTOs ====================
 
 data class MedicationDto(
@@ -471,6 +521,12 @@ data class UpdateMedicationRequest(
     val endDate: String? = null,
     val notes: String? = null,
     val status: String? = null,
+)
+
+data class MedicationCalendarRecordDto(
+    val medicationName: String,
+    val status: String,
+    val scheduledTime: String,
 )
 
 // ==================== 风险预警 DTOs ====================

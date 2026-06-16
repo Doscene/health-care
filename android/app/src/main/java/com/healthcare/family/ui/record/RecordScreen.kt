@@ -106,6 +106,11 @@ fun RecordScreen(
                     onClick = { selectedTab = 1 },
                     text = { Text("血糖") },
                 )
+                Tab(
+                    selected = selectedTab == 2,
+                    onClick = { selectedTab = 2 },
+                    text = { Text("语音") },
+                )
             }
 
             when (selectedTab) {
@@ -130,6 +135,17 @@ fun RecordScreen(
                     onBgValueChanged = viewModel::onBgValueChanged,
                     onSubmit = viewModel::submitBgRecord,
                     onDeleteBg = viewModel::deleteBgRecord,
+                )
+                2 -> VoiceTab(
+                    recordState = uiState.voiceRecordState,
+                    recognizedText = uiState.recognizedText,
+                    parsedData = uiState.parsedHealthData,
+                    isProcessing = uiState.isVoiceProcessing,
+                    onRecordStart = viewModel::onVoiceRecordStart,
+                    onRecordStop = { viewModel.onVoiceRecordStop("") },
+                    onRecordCancel = viewModel::onVoiceRecordCancel,
+                    onConfirm = viewModel::confirmVoiceRecord,
+                    onRetry = viewModel::onVoiceRecordCancel,
                 )
             }
         }
@@ -313,6 +329,60 @@ private fun BloodSugarTab(
                 BgRecordItem(
                     record = record,
                     onDelete = { onDeleteBg(record.id) },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun VoiceTab(
+    recordState: VoiceRecordState,
+    recognizedText: String,
+    parsedData: ParsedHealthData?,
+    isProcessing: Boolean,
+    onRecordStart: () -> Unit,
+    onRecordStop: () -> Unit,
+    onRecordCancel: () -> Unit,
+    onConfirm: (ParsedHealthData) -> Unit,
+    onRetry: () -> Unit,
+) {
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        item {
+            Text("语音记录", style = MaterialTheme.typography.titleLarge)
+        }
+
+        item {
+            Text(
+                text = "说出您的血压或血糖数据，例如：\n“血压135 85” 或 “空腹血糖6.8”",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+
+        item {
+            if (recognizedText.isEmpty()) {
+                // 录音按钮
+                VoiceRecordButton(
+                    recordState = recordState,
+                    onRecordStart = onRecordStart,
+                    onRecordStop = onRecordStop,
+                    onRecordCancel = onRecordCancel,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            } else {
+                // 识别结果
+                VoiceRecognitionResult(
+                    recognizedText = recognizedText,
+                    parsedData = parsedData,
+                    isProcessing = isProcessing,
+                    onConfirm = onConfirm,
+                    onRetry = onRetry,
                 )
             }
         }

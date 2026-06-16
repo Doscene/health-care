@@ -6,6 +6,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.healthcare.family.data.local.TokenManager
 import com.healthcare.family.ui.auth.LoginScreen
+import com.healthcare.family.ui.camera.CameraMode
+import com.healthcare.family.ui.camera.CameraScreen
 import com.healthcare.family.ui.contacts.EmergencyContactScreen
 import com.healthcare.family.ui.diet.MenuScreen
 import com.healthcare.family.ui.diet.RecipeDetailScreen
@@ -14,6 +16,8 @@ import com.healthcare.family.ui.family.CreateFamilyScreen
 import com.healthcare.family.ui.family.InviteMemberScreen
 import com.healthcare.family.ui.family.JoinFamilyScreen
 import com.healthcare.family.ui.kit.FirstAidKitScreen
+import com.healthcare.family.ui.medication.AddMedicationScreen
+import com.healthcare.family.ui.medication.MedicationCalendarScreen
 import com.healthcare.family.ui.medication.MedicationScreen
 import com.healthcare.family.ui.onboarding.RoleSelectionScreen
 import com.healthcare.family.ui.plan.AddPlanScreen
@@ -97,6 +101,19 @@ fun AppNavGraph(
             MedicationScreen(onBack = { navController.popBackStack() })
         }
 
+        // 添加药品
+        composable("medication/add") {
+            AddMedicationScreen(
+                onBack = { navController.popBackStack() },
+                onNavigateToCamera = { navController.navigate("camera/MEDICINE_BOX") },
+            )
+        }
+
+        // 服药日历
+        composable("medication/calendar") {
+            MedicationCalendarScreen(onBack = { navController.popBackStack() })
+        }
+
         // 复诊计划
         composable("profile/plans") {
             PlanListScreen(
@@ -132,6 +149,24 @@ fun AppNavGraph(
         // 健康周报
         composable("report/weekly") {
             WeeklyReportScreen(onBack = { navController.popBackStack() })
+        }
+
+        // 拍照
+        composable("camera/{mode}") { backStackEntry ->
+            val mode = backStackEntry.arguments?.getString("mode") ?: "GENERAL"
+            val cameraMode = try {
+                CameraMode.valueOf(mode)
+            } catch (e: Exception) {
+                CameraMode.GENERAL
+            }
+            CameraScreen(
+                cameraMode = cameraMode,
+                onBack = { navController.popBackStack() },
+                onImageCaptured = { filePath ->
+                    navController.previousBackStackEntry?.savedStateHandle?.set("capturedImage", filePath)
+                    navController.popBackStack()
+                },
+            )
         }
 
         // 饮食详情

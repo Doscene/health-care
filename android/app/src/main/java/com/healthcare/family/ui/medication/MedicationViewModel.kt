@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.healthcare.family.data.remote.api.AddMedicationRequest
 import com.healthcare.family.data.remote.api.MedicationDto
 import com.healthcare.family.data.repository.MedicationRepository
+import com.healthcare.family.worker.MedicationReminderManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,11 +19,14 @@ data class MedicationUiState(
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
     val successMessage: String? = null,
+    val calendarData: Map<String, List<MedicationCalendarRecord>> = emptyMap(),
+    val ocrRecognizedName: String = "",
 )
 
 @HiltViewModel
 class MedicationViewModel @Inject constructor(
     private val medicationRepository: MedicationRepository,
+    private val reminderManager: MedicationReminderManager,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MedicationUiState())
@@ -53,6 +57,7 @@ class MedicationViewModel @Inject constructor(
         frequencyPerDay: Int,
         timeSlots: List<String>,
         startDate: String,
+        notes: String? = null,
     ) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
@@ -65,10 +70,13 @@ class MedicationViewModel @Inject constructor(
                     timeSlots = timeSlots,
                     remindTimes = timeSlots,
                     startDate = startDate,
+                    notes = notes,
                 ),
             ).fold(
-                onSuccess = {
+                onSuccess = { medication ->
                     _uiState.update { it.copy(isLoading = false, successMessage = "添加成功") }
+                    // 设置用药提醒
+                    reminderManager.scheduleReminders(medication)
                     loadMedications()
                 },
                 onFailure = { e ->
@@ -84,6 +92,8 @@ class MedicationViewModel @Inject constructor(
             medicationRepository.deleteMedication(medicationId).fold(
                 onSuccess = {
                     _uiState.update { it.copy(isLoading = false, successMessage = "已删除") }
+                    // 取消用药提醒
+                    reminderManager.cancelReminders(medicationId)
                     loadMedications()
                 },
                 onFailure = { e ->
@@ -95,5 +105,26 @@ class MedicationViewModel @Inject constructor(
 
     fun clearMessages() {
         _uiState.update { it.copy(errorMessage = null, successMessage = null) }
+    }
+
+    fun updateError(message: String) {
+        _uiState.update { it.copy(errorMessage = message) }
+    }
+
+    fun updateOcrName(name: String) {
+        _uiState.update { it.copy(ocrRecognizedName = name) }
+    }
+
+    fun loadCalendarData(year: Int, month: Int) {
+        viewModelScope.launch {
+            medicationRepository.getCalendarData(year, month).fold(
+                onSuccess = { data ->
+                    _uiState.update { it.copy(calendarData = data) }
+                },
+                onFailure = { e ->
+                    _uiState.update { it.copy(errorMessage = e.message) }
+                },
+            )
+        }
     }
 }
