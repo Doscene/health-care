@@ -7,6 +7,7 @@ import com.healthcare.family.data.remote.api.BpRecordDto
 import com.healthcare.family.data.remote.api.HealthCareApi
 import com.healthcare.family.data.remote.api.VoiceRecognizeRequest
 import com.healthcare.family.data.remote.api.VoiceRecognizeResponse
+import com.healthcare.family.util.toUserFriendlyMessage
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -29,7 +30,7 @@ class RecordRepository @Inject constructor(
                 Result.failure(Exception(resp.message))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(Exception(e.toUserFriendlyMessage()))
         }
     }
 
@@ -42,7 +43,7 @@ class RecordRepository @Inject constructor(
                 Result.failure(Exception(resp.message))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(Exception(e.toUserFriendlyMessage()))
         }
     }
 
@@ -55,7 +56,7 @@ class RecordRepository @Inject constructor(
                 Result.failure(Exception(resp.message))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(Exception(e.toUserFriendlyMessage()))
         }
     }
 
@@ -72,7 +73,7 @@ class RecordRepository @Inject constructor(
                 Result.failure(Exception(resp.message))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(Exception(e.toUserFriendlyMessage()))
         }
     }
 
@@ -85,7 +86,7 @@ class RecordRepository @Inject constructor(
                 Result.failure(Exception(resp.message))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(Exception(e.toUserFriendlyMessage()))
         }
     }
 
@@ -98,7 +99,7 @@ class RecordRepository @Inject constructor(
                 Result.failure(Exception(resp.message))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(Exception(e.toUserFriendlyMessage()))
         }
     }
 
@@ -111,7 +112,7 @@ class RecordRepository @Inject constructor(
                 Result.failure(Exception(resp.message))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(Exception(e.toUserFriendlyMessage()))
         }
     }
 }

@@ -4,6 +4,7 @@ import com.healthcare.family.data.remote.api.DailyMenuDto
 import com.healthcare.family.data.remote.api.HealthCareApi
 import com.healthcare.family.data.remote.api.RecipeDto
 import com.healthcare.family.data.remote.api.SubstitutionDto
+import com.healthcare.family.util.toUserFriendlyMessage
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -21,7 +22,7 @@ class DietRepository @Inject constructor(
                 Result.failure(Exception(resp.message))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(Exception(e.toUserFriendlyMessage()))
         }
     }
 
@@ -34,7 +35,7 @@ class DietRepository @Inject constructor(
                 Result.failure(Exception(resp.message))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(Exception(e.toUserFriendlyMessage()))
         }
     }
 
@@ -47,7 +48,7 @@ class DietRepository @Inject constructor(
                 Result.failure(Exception(resp.message))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(Exception(e.toUserFriendlyMessage()))
         }
     }
 
@@ -60,7 +61,7 @@ class DietRepository @Inject constructor(
                 Result.failure(Exception(resp.message))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(Exception(e.toUserFriendlyMessage()))
         }
     }
 }

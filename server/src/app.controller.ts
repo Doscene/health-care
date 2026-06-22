@@ -13,4 +13,13 @@ export class AppController {
       version: '1.0.0',
     };
   }
+
+  @Public()
+  @Get('health')
+  getHealth(): { status: string; version: string } {
+    return {
+      status: 'ok',
+      version: '1.0.0',
+    };
+  }
 }

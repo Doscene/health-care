@@ -3,6 +3,7 @@ package com.healthcare.family.data.repository
 import com.healthcare.family.data.remote.api.FamilyHomeDto
 import com.healthcare.family.data.remote.api.HealthCareApi
 import com.healthcare.family.data.remote.api.PatientHomeDto
+import com.healthcare.family.util.toUserFriendlyMessage
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -20,7 +21,7 @@ class HomeRepository @Inject constructor(
                 Result.failure(Exception(resp.message))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(Exception(e.toUserFriendlyMessage()))
         }
     }
 
@@ -33,7 +34,7 @@ class HomeRepository @Inject constructor(
                 Result.failure(Exception(resp.message))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(Exception(e.toUserFriendlyMessage()))
         }
     }
 }

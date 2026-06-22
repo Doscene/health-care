@@ -6,6 +6,7 @@ import com.healthcare.family.data.remote.api.MedicationCalendarRecordDto
 import com.healthcare.family.data.remote.api.MedicationDto
 import com.healthcare.family.data.remote.api.UpdateMedicationRequest
 import com.healthcare.family.ui.medication.MedicationCalendarRecord
+import com.healthcare.family.util.toUserFriendlyMessage
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -23,7 +24,7 @@ class MedicationRepository @Inject constructor(
                 Result.failure(Exception(resp.message))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(Exception(e.toUserFriendlyMessage()))
         }
     }
 
@@ -36,7 +37,7 @@ class MedicationRepository @Inject constructor(
                 Result.failure(Exception(resp.message))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(Exception(e.toUserFriendlyMessage()))
         }
     }
 
@@ -49,7 +50,7 @@ class MedicationRepository @Inject constructor(
                 Result.failure(Exception(resp.message))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(Exception(e.toUserFriendlyMessage()))
         }
     }
 
@@ -62,7 +63,7 @@ class MedicationRepository @Inject constructor(
                 Result.failure(Exception(resp.message))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(Exception(e.toUserFriendlyMessage()))
         }
     }
 
@@ -84,7 +85,7 @@ class MedicationRepository @Inject constructor(
                 Result.failure(Exception(resp.message))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(Exception(e.toUserFriendlyMessage()))
         }
     }
 }

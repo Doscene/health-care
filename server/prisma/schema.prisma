@@ -18,16 +18,21 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  memberships      FamilyMember[]
-  medications      Medication[]
-  bpRecords        BloodPressureRecord[]
-  bgRecords        BloodSugarRecord[]
-  appointments     Appointment[]
-  emergencyContacts EmergencyContact[]
-  riskAlerts       RiskAlert[]
-  dietRecords      DietRecord[]
-  firstAidKit      FirstAidKit[]
-  achievements     UserAchievement[]
+  memberships         FamilyMember[]
+  medications         Medication[]
+  bpRecords           BloodPressureRecord[]
+  bgRecords           BloodSugarRecord[]
+  appointments        Appointment[]
+  emergencyContacts   EmergencyContact[]
+  riskAlerts          RiskAlert[]
+  dietRecords         DietRecord[]
+  firstAidKit         FirstAidKit[]
+  achievements        UserAchievement[]
+  remindersFrom       MutualReminder[]          @relation("RemindersFrom")
+  remindersTo         MutualReminder[]          @relation("RemindersTo")
+  challengeProgresses FamilyChallengeProgress[]
+  dailyMenus          DailyMenu[]
+  shoppingLists       ShoppingList[]
 }
 
 model Family {
@@ -39,8 +44,10 @@ model Family {
   memberCount      Int       @default(1)
   createdAt        DateTime  @default(now())
 
-  members FamilyMember[]
-  goals   FamilyGoal[]
+  members    FamilyMember[]
+  goals      FamilyGoal[]
+  reminders  MutualReminder[]
+  challenges FamilyChallenge[]
 }
 
 model FamilyMember {
@@ -59,18 +66,18 @@ model FamilyMember {
 }
 
 model Medication {
-  id              String   @id @default(uuid())
+  id              String    @id @default(uuid())
   userId          String
-  name            String   @db.VarChar(200)
-  specification   String   @db.VarChar(100)
+  name            String    @db.VarChar(200)
+  specification   String    @db.VarChar(100)
   dosagePerTime   Int
   frequencyPerDay Int
   timeSlots       Json
   remindTimes     Json
   startDate       DateTime
   endDate         DateTime?
-  status          String   @default("active") @db.VarChar(20)
-  notes           String?  @db.Text
+  status          String    @default("active") @db.VarChar(20)
+  notes           String?   @db.Text
 
   user    User               @relation(fields: [userId], references: [id])
   records MedicationRecord[]
@@ -93,10 +100,10 @@ model MedicationRecord {
 }
 
 model MedicationConflict {
-  id     String @id @default(uuid())
-  drugA  String @db.VarChar(200)
-  drugB  String @db.VarChar(200)
-  severity String @db.VarChar(10)
+  id          String @id @default(uuid())
+  drugA       String @db.VarChar(200)
+  drugB       String @db.VarChar(200)
+  severity    String @db.VarChar(10)
   description String @db.Text
 }
 
@@ -130,30 +137,30 @@ model BloodSugarRecord {
 }
 
 model RiskAlert {
-  id               String   @id @default(uuid())
+  id               String    @id @default(uuid())
   userId           String
-  level            String   @db.VarChar(10)
-  triggerType      String   @db.VarChar(30)
-  triggerValue     String   @db.VarChar(100)
-  status           String   @default("active") @db.VarChar(20)
+  level            String    @db.VarChar(10)
+  triggerType      String    @db.VarChar(30)
+  triggerValue     String    @db.VarChar(100)
+  status           String    @default("active") @db.VarChar(20)
   notifiedContacts Json
-  createdAt        DateTime @default(now())
+  createdAt        DateTime  @default(now())
   resolvedAt       DateTime?
 
-  user     User          @relation(fields: [userId], references: [id])
-  inquiry  RiskInquiry[]
+  user    User          @relation(fields: [userId], references: [id])
+  inquiry RiskInquiry[]
 
   @@index([userId, level, status])
 }
 
 model RiskInquiry {
-  id         String   @id @default(uuid())
+  id         String    @id @default(uuid())
   alertId    String
-  question   String   @db.VarChar(500)
+  question   String    @db.VarChar(500)
   options    Json
-  answer     String?  @db.VarChar(200)
+  answer     String?   @db.VarChar(200)
   answeredAt DateTime?
-  createdAt  DateTime @default(now())
+  createdAt  DateTime  @default(now())
 
   alert RiskAlert @relation(fields: [alertId], references: [id])
 
@@ -161,15 +168,15 @@ model RiskInquiry {
 }
 
 model FirstAidKit {
-  id       String @id @default(uuid())
-  userId   String
-  name     String @db.VarChar(100)
-  type     String @db.VarChar(20)
-  quantity Int    @default(1)
+  id         String    @id @default(uuid())
+  userId     String
+  name       String    @db.VarChar(100)
+  type       String    @db.VarChar(20)
+  quantity   Int       @default(1)
   expireDate DateTime?
-  notes    String? @db.VarChar(500)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  notes      String?   @db.VarChar(500)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
   user User @relation(fields: [userId], references: [id])
 
@@ -186,13 +193,13 @@ model FirstAidGuide {
 }
 
 model EmergencyContact {
-  id        String  @id @default(uuid())
-  userId    String
-  name      String  @db.VarChar(50)
-  phone     String  @db.VarChar(20)
-  relation  String  @db.VarChar(30)
-  priority  Int     @default(0)
-  isMutual  Boolean @default(false)
+  id       String  @id @default(uuid())
+  userId   String
+  name     String  @db.VarChar(50)
+  phone    String  @db.VarChar(20)
+  relation String  @db.VarChar(30)
+  priority Int     @default(0)
+  isMutual Boolean @default(false)
 
   user User @relation(fields: [userId], references: [id])
 }
@@ -266,10 +273,10 @@ model KnowledgeArticle {
 }
 
 model CommunityGroup {
-  id          String @id @default(uuid())
-  name        String @db.VarChar(100)
-  description String @db.Text
-  memberCount Int    @default(0)
+  id          String  @id @default(uuid())
+  name        String  @db.VarChar(100)
+  description String  @db.Text
+  memberCount Int     @default(0)
   tags        Json
   isActive    Boolean @default(true)
 }
@@ -293,4 +300,126 @@ model VerificationCode {
   expiresAt DateTime
   attempts  Int      @default(0)
   createdAt DateTime @default(now())
+}
+
+// ==================== Phase 3：家庭协作 + 饮食 ====================
+
+/// 家庭成员互相提醒
+/// type 枚举：bp / bg / medication
+/// status 枚举：pending / done / expired
+model MutualReminder {
+  id          String    @id @default(uuid())
+  familyId    String
+  fromUserId  String
+  toUserId    String
+  type        String    @db.VarChar(20)
+  message     String?   @db.VarChar(200)
+  status      String    @default("pending") @db.VarChar(20)
+  createdAt   DateTime  @default(now())
+  fulfilledAt DateTime?
+
+  family   Family @relation(fields: [familyId], references: [id])
+  fromUser User   @relation("RemindersFrom", fields: [fromUserId], references: [id])
+  toUser   User   @relation("RemindersTo", fields: [toUserId], references: [id])
+
+  @@index([familyId, toUserId, status])
+  @@index([familyId, fromUserId])
+}
+
+/// 家庭挑战
+/// type 枚举：weekend_walk / bp_stable / full_attendance / custom
+/// status 枚举：active / completed / failed
+model FamilyChallenge {
+  id             String   @id @default(uuid())
+  familyId       String
+  type           String   @db.VarChar(30)
+  title          String   @db.VarChar(200)
+  description    String?  @db.Text
+  ruleConfig     Json
+  participantIds Json
+  startDate      DateTime
+  endDate        DateTime
+  status         String   @default("active") @db.VarChar(20)
+  createdAt      DateTime @default(now())
+
+  family     Family                    @relation(fields: [familyId], references: [id])
+  progresses FamilyChallengeProgress[]
+
+  @@index([familyId, status])
+}
+
+/// 挑战每日打点
+model FamilyChallengeProgress {
+  id          String   @id @default(uuid())
+  challengeId String
+  userId      String
+  date        DateTime @db.Date
+  value       Float    @default(0)
+  met         Boolean  @default(false)
+
+  challenge FamilyChallenge @relation(fields: [challengeId], references: [id])
+  user      User            @relation(fields: [userId], references: [id])
+
+  @@unique([challengeId, userId, date])
+  @@index([userId, date])
+}
+
+/// 食材替换规则（B3-8）
+model SubstitutionRule {
+  id             String @id @default(uuid())
+  originalFood   String @db.VarChar(100)
+  substituteFood String @db.VarChar(100)
+  reason         String @db.VarChar(300)
+  suitableFor    Json
+  nutritionDelta Json?
+  priority       Int    @default(0)
+
+  @@index([originalFood])
+}
+
+/// 今日菜单（按用户 + 日期 + 餐次组合）
+model DailyMenu {
+  id        String   @id @default(uuid())
+  userId    String
+  date      DateTime @db.Date
+  mealType  String   @db.VarChar(20)
+  recipeId  String
+  servings  Int      @default(1)
+  notes     String?  @db.VarChar(200)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, date])
+}
+
+/// 买菜清单
+model ShoppingList {
+  id        String   @id @default(uuid())
+  userId    String
+  date      DateTime @db.Date
+  name      String   @db.VarChar(100)
+  status    String   @default("active") @db.VarChar(20)
+  createdAt DateTime @default(now())
+
+  user  User               @relation(fields: [userId], references: [id])
+  items ShoppingListItem[]
+
+  @@index([userId, date])
+}
+
+/// 买菜清单条目
+model ShoppingListItem {
+  id             String  @id @default(uuid())
+  listId         String
+  category       String  @db.VarChar(30)
+  name           String  @db.VarChar(100)
+  quantity       Float   @default(1)
+  unit           String  @db.VarChar(20)
+  checked        Boolean @default(false)
+  sourceRecipeId String?
+
+  list ShoppingList @relation(fields: [listId], references: [id], onDelete: Cascade)
+
+  @@index([listId, checked])
 }

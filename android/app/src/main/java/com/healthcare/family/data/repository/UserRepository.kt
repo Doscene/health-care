@@ -4,6 +4,7 @@ import com.healthcare.family.data.remote.api.HealthCareApi
 import com.healthcare.family.data.remote.api.UpdateProfileRequest
 import com.healthcare.family.data.remote.api.UpdateRoleRequest
 import com.healthcare.family.data.remote.api.UserDto
+import com.healthcare.family.util.toUserFriendlyMessage
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -21,7 +22,7 @@ class UserRepository @Inject constructor(
                 Result.failure(Exception(resp.message))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(Exception(e.toUserFriendlyMessage()))
         }
     }
 
@@ -34,7 +35,7 @@ class UserRepository @Inject constructor(
                 Result.failure(Exception(resp.message))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(Exception(e.toUserFriendlyMessage()))
         }
     }
 
@@ -47,7 +48,7 @@ class UserRepository @Inject constructor(
                 Result.failure(Exception(resp.message))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(Exception(e.toUserFriendlyMessage()))
         }
     }
 }

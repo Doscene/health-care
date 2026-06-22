@@ -1,5 +1,9 @@
 package com.healthcare.family.ui.home
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -15,9 +19,6 @@ import com.healthcare.family.ui.home.child.ChildHomeContent
 import com.healthcare.family.ui.home.elderly.ElderlyHomeContent
 import com.healthcare.family.ui.home.young.YoungHomeContent
 
-/**
- * 首页：根据用户角色显示不同内容，含四级风险弹窗。
- */
 @Composable
 fun HomeScreen(
     userRole: String?,
@@ -27,8 +28,8 @@ fun HomeScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var activeAlert by remember { mutableStateOf<AlertSummaryDto?>(null) }
+    val snackbarHostState = remember { SnackbarHostState() }
 
-    // 根据角色加载数据
     LaunchedEffect(userRole) {
         when (userRole?.lowercase()) {
             "patient" -> viewModel.loadPatientHome()
@@ -37,42 +38,51 @@ fun HomeScreen(
         }
     }
 
-    when (userRole?.lowercase()) {
-        "patient" -> YoungHomeContent(
-            onNavigate = onNavigate,
-            onAlertClick = { activeAlert = it },
-            patientHome = uiState.patientHome,
-            isLoading = uiState.isLoading,
-        )
-        "family" -> ChildHomeContent(
-            onNavigate = onNavigate,
-            familyHome = uiState.familyHome,
-            isLoading = uiState.isLoading,
-        )
-        else -> ElderlyHomeContent(
-            onNavigate = onNavigate,
-            onAlertClick = { activeAlert = it },
-            patientHome = uiState.patientHome,
-            isLoading = uiState.isLoading,
-        )
+    LaunchedEffect(uiState.errorMessage) {
+        uiState.errorMessage?.let {
+            snackbarHostState.showSnackbar(it)
+        }
     }
 
-    // 风险弹窗
-    activeAlert?.let { summary ->
-        val alert = AlertDto(
-            id = summary.id,
-            level = summary.level,
-            triggerType = summary.triggerType,
-            triggerValue = summary.triggerValue,
-            status = "active",
-            notifiedContacts = null,
-            createdAt = summary.createdAt ?: "",
-        )
-        RiskAlertDialog(
-            alert = alert,
-            onAcknowledge = { activeAlert = null },
-            onDismiss = { activeAlert = null },
-            onEmergencyCall = onEmergencyCall,
-        )
+    Box(modifier = Modifier.fillMaxSize()) {
+        when (userRole?.lowercase()) {
+            "patient" -> YoungHomeContent(
+                onNavigate = onNavigate,
+                onAlertClick = { activeAlert = it },
+                patientHome = uiState.patientHome,
+                isLoading = uiState.isLoading,
+            )
+            "family" -> ChildHomeContent(
+                onNavigate = onNavigate,
+                familyHome = uiState.familyHome,
+                isLoading = uiState.isLoading,
+            )
+            else -> ElderlyHomeContent(
+                onNavigate = onNavigate,
+                onAlertClick = { activeAlert = it },
+                patientHome = uiState.patientHome,
+                isLoading = uiState.isLoading,
+            )
+        }
+
+        SnackbarHost(hostState = snackbarHostState)
+
+        activeAlert?.let { summary ->
+            val alert = AlertDto(
+                id = summary.id,
+                level = summary.level,
+                triggerType = summary.triggerType,
+                triggerValue = summary.triggerValue,
+                status = "active",
+                notifiedContacts = null,
+                createdAt = summary.createdAt ?: "",
+            )
+            RiskAlertDialog(
+                alert = alert,
+                onAcknowledge = { activeAlert = null },
+                onDismiss = { activeAlert = null },
+                onEmergencyCall = onEmergencyCall,
+            )
+        }
     }
 }

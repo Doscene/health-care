@@ -8,6 +8,7 @@ import com.healthcare.family.data.remote.dto.SendCodeRequest
 import com.healthcare.family.data.remote.dto.TokenResponse
 import com.healthcare.family.data.remote.interceptor.AuthInterceptor
 import com.healthcare.family.data.remote.interceptor.TokenRefreshProvider
+import com.healthcare.family.util.toUserFriendlyMessage
 import kotlinx.coroutines.flow.firstOrNull
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -33,7 +34,7 @@ class AuthRepository @Inject constructor(
                 Result.failure(Exception(response.message))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(Exception(e.toUserFriendlyMessage()))
         }
     }
 
@@ -50,7 +51,7 @@ class AuthRepository @Inject constructor(
                 Result.failure(Exception(response.message))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(Exception(e.toUserFriendlyMessage()))
         }
     }
 

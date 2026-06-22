@@ -16,13 +16,13 @@ import { CurrentUser, type UserPayload } from '../../common/decorators/current-u
 
 @ApiTags('健康指标记录')
 @ApiBearerAuth()
-@Controller('records')
+@Controller('record')
 export class HealthMetricsController {
   constructor(private readonly healthMetricsService: HealthMetricsService) {}
 
   // ==================== 血压记录 ====================
 
-  @Post('blood-pressure')
+  @Post('bp')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '添加血压记录' })
   async createBpRecord(
@@ -44,7 +44,7 @@ export class HealthMetricsController {
     };
   }
 
-  @Get('blood-pressure')
+  @Get('bp')
   @ApiOperation({ summary: '获取血压记录列表' })
   async getBpRecords(
     @CurrentUser() user: UserPayload,
@@ -65,7 +65,7 @@ export class HealthMetricsController {
     };
   }
 
-  @Get('blood-pressure/:recordId')
+  @Get('bp/:recordId')
   @ApiOperation({ summary: '获取血压记录详情' })
   async getBpRecord(
     @CurrentUser() user: UserPayload,
@@ -78,7 +78,7 @@ export class HealthMetricsController {
     };
   }
 
-  @Put('blood-pressure/:recordId')
+  @Put('bp/:recordId')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '更新血压记录' })
   async updateBpRecord(
@@ -101,7 +101,7 @@ export class HealthMetricsController {
     };
   }
 
-  @Delete('blood-pressure/:recordId')
+  @Delete('bp/:recordId')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '删除血压记录' })
   async deleteBpRecord(
@@ -117,7 +117,7 @@ export class HealthMetricsController {
 
   // ==================== 血糖记录 ====================
 
-  @Post('blood-sugar')
+  @Post('bg')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '添加血糖记录' })
   async createBgRecord(
@@ -138,7 +138,7 @@ export class HealthMetricsController {
     };
   }
 
-  @Get('blood-sugar')
+  @Get('bg')
   @ApiOperation({ summary: '获取血糖记录列表' })
   async getBgRecords(
     @CurrentUser() user: UserPayload,
@@ -161,7 +161,7 @@ export class HealthMetricsController {
     };
   }
 
-  @Get('blood-sugar/:recordId')
+  @Get('bg/:recordId')
   @ApiOperation({ summary: '获取血糖记录详情' })
   async getBgRecord(
     @CurrentUser() user: UserPayload,
@@ -174,7 +174,7 @@ export class HealthMetricsController {
     };
   }
 
-  @Put('blood-sugar/:recordId')
+  @Put('bg/:recordId')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '更新血糖记录' })
   async updateBgRecord(
@@ -196,7 +196,7 @@ export class HealthMetricsController {
     };
   }
 
-  @Delete('blood-sugar/:recordId')
+  @Delete('bg/:recordId')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '删除血糖记录' })
   async deleteBgRecord(
@@ -222,7 +222,7 @@ export class HealthMetricsController {
     };
   }
 
-  @Get('trend/blood-pressure')
+  @Get('trend/bp')
   @ApiOperation({ summary: '获取血压趋势数据' })
   async getBpTrend(
     @CurrentUser() user: UserPayload,
@@ -238,7 +238,7 @@ export class HealthMetricsController {
     };
   }
 
-  @Get('trend/blood-sugar')
+  @Get('trend/bg')
   @ApiOperation({ summary: '获取血糖趋势数据' })
   async getBgTrend(
     @CurrentUser() user: UserPayload,
