@@ -487,6 +487,263 @@ export class HealthMetricsService {
     return trend;
   }
 
+  // ==================== B4-4: 趋势数据接口 ====================
+
+  async getTrendData(
+    userId: string,
+    type: 'bp' | 'bg',
+    period: string,
+    granularity: 'day' | 'week' | 'month',
+  ) {
+    const periodDays = period === '90d' ? 90 : period === '30d' ? 30 : 7;
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - periodDays);
+    startDate.setHours(0, 0, 0, 0);
+    const endDate = new Date();
+    endDate.setHours(23, 59, 59, 999);
+
+    if (type === 'bp') {
+      const records = await this.prisma.bloodPressureRecord.findMany({
+        where: { userId, recordedAt: { gte: startDate, lte: endDate } },
+        orderBy: { recordedAt: 'asc' },
+      });
+
+      if (granularity === 'day') {
+        return this.aggregateByDay(records, (r) => ({
+          systolic: r.systolic,
+          diastolic: r.diastolic,
+          heartRate: r.heartRate,
+        }));
+      } else if (granularity === 'week') {
+        return this.aggregateByWeek(records, (r) => ({
+          systolic: r.systolic,
+          diastolic: r.diastolic,
+          heartRate: r.heartRate,
+        }));
+      } else {
+        return this.aggregateByMonth(records, (r) => ({
+          systolic: r.systolic,
+          diastolic: r.diastolic,
+          heartRate: r.heartRate,
+        }));
+      }
+    } else {
+      const records = await this.prisma.bloodSugarRecord.findMany({
+        where: { userId, recordedAt: { gte: startDate, lte: endDate } },
+        orderBy: { recordedAt: 'asc' },
+      });
+
+      if (granularity === 'day') {
+        return this.aggregateBgByDay(records);
+      } else if (granularity === 'week') {
+        return this.aggregateBgByWeek(records);
+      } else {
+        return this.aggregateBgByMonth(records);
+      }
+    }
+  }
+
+  private aggregateByDay<T extends { recordedAt: Date }>(
+    records: T[],
+    extract: (r: T) => { systolic: number; diastolic: number; heartRate?: number | null },
+  ) {
+    const grouped: Record<string, T[]> = {};
+    for (const r of records) {
+      const key = r.recordedAt.toISOString().split('T')[0];
+      if (!grouped[key]) grouped[key] = [];
+      grouped[key].push(r);
+    }
+
+    return Object.entries(grouped).map(([date, recs]) => {
+      const vals = recs.map(extract);
+      const avgSystolic = Math.round(vals.reduce((s, v) => s + v.systolic, 0) / vals.length);
+      const avgDiastolic = Math.round(vals.reduce((s, v) => s + v.diastolic, 0) / vals.length);
+      return {
+        date,
+        avgSystolic,
+        avgDiastolic,
+        movingAvgSystolic: avgSystolic,
+        movingAvgDiastolic: avgDiastolic,
+        count: recs.length,
+      };
+    });
+  }
+
+  private aggregateByWeek<T extends { recordedAt: Date }>(
+    records: T[],
+    extract: (r: T) => { systolic: number; diastolic: number; heartRate?: number | null },
+  ) {
+    const weekMap: Record<string, T[]> = {};
+    for (const r of records) {
+      const d = r.recordedAt;
+      const weekStart = new Date(d);
+      weekStart.setDate(d.getDate() - d.getDay());
+      const key = weekStart.toISOString().split('T')[0];
+      if (!weekMap[key]) weekMap[key] = [];
+      weekMap[key].push(r);
+    }
+
+    const sorted = Object.entries(weekMap).sort(([a], [b]) => a.localeCompare(b));
+    let prevSystolic = 0;
+    let prevDiastolic = 0;
+
+    return sorted.map(([weekStart, recs]) => {
+      const vals = recs.map(extract);
+      const avgSystolic = Math.round(vals.reduce((s, v) => s + v.systolic, 0) / vals.length);
+      const avgDiastolic = Math.round(vals.reduce((s, v) => s + v.diastolic, 0) / vals.length);
+      const movingAvgSystolic = prevSystolic ? Math.round((avgSystolic + prevSystolic) / 2) : avgSystolic;
+      const movingAvgDiastolic = prevDiastolic ? Math.round((avgDiastolic + prevDiastolic) / 2) : avgDiastolic;
+      prevSystolic = avgSystolic;
+      prevDiastolic = avgDiastolic;
+      return { weekStart, avgSystolic, avgDiastolic, movingAvgSystolic, movingAvgDiastolic, count: recs.length };
+    });
+  }
+
+  private aggregateByMonth<T extends { recordedAt: Date }>(
+    records: T[],
+    extract: (r: T) => { systolic: number; diastolic: number; heartRate?: number | null },
+  ) {
+    const monthMap: Record<string, T[]> = {};
+    for (const r of records) {
+      const key = r.recordedAt.toISOString().slice(0, 7);
+      if (!monthMap[key]) monthMap[key] = [];
+      monthMap[key].push(r);
+    }
+
+    const sorted = Object.entries(monthMap).sort(([a], [b]) => a.localeCompare(b));
+    let prevSystolic = 0;
+    let prevDiastolic = 0;
+
+    return sorted.map(([month, recs]) => {
+      const vals = recs.map(extract);
+      const avgSystolic = Math.round(vals.reduce((s, v) => s + v.systolic, 0) / vals.length);
+      const avgDiastolic = Math.round(vals.reduce((s, v) => s + v.diastolic, 0) / vals.length);
+      const movingAvgSystolic = prevSystolic ? Math.round((avgSystolic + prevSystolic) / 2) : avgSystolic;
+      const movingAvgDiastolic = prevDiastolic ? Math.round((avgDiastolic + prevDiastolic) / 2) : avgDiastolic;
+      prevSystolic = avgSystolic;
+      prevDiastolic = avgDiastolic;
+      return { month, avgSystolic, avgDiastolic, movingAvgSystolic, movingAvgDiastolic, count: recs.length };
+    });
+  }
+
+  private aggregateBgByDay(records: any[]) {
+    const grouped: Record<string, any[]> = {};
+    for (const r of records) {
+      const key = r.recordedAt.toISOString().split('T')[0];
+      if (!grouped[key]) grouped[key] = [];
+      grouped[key].push(r);
+    }
+
+    return Object.entries(grouped).map(([date, recs]) => ({
+      date,
+      avgValue: parseFloat((recs.reduce((s, r) => s + Number(r.value), 0) / recs.length).toFixed(1)),
+      count: recs.length,
+      byType: this.groupBgByType(recs),
+    }));
+  }
+
+  private aggregateBgByWeek(records: any[]) {
+    const weekMap: Record<string, any[]> = {};
+    for (const r of records) {
+      const d = r.recordedAt;
+      const weekStart = new Date(d);
+      weekStart.setDate(d.getDate() - d.getDay());
+      const key = weekStart.toISOString().split('T')[0];
+      if (!weekMap[key]) weekMap[key] = [];
+      weekMap[key].push(r);
+    }
+
+    return Object.entries(weekMap)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([weekStart, recs]) => ({
+        weekStart,
+        avgValue: parseFloat((recs.reduce((s, r) => s + Number(r.value), 0) / recs.length).toFixed(1)),
+        count: recs.length,
+        byType: this.groupBgByType(recs),
+      }));
+  }
+
+  private aggregateBgByMonth(records: any[]) {
+    const monthMap: Record<string, any[]> = {};
+    for (const r of records) {
+      const key = r.recordedAt.toISOString().slice(0, 7);
+      if (!monthMap[key]) monthMap[key] = [];
+      monthMap[key].push(r);
+    }
+
+    return Object.entries(monthMap)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([month, recs]) => ({
+        month,
+        avgValue: parseFloat((recs.reduce((s, r) => s + Number(r.value), 0) / recs.length).toFixed(1)),
+        count: recs.length,
+        byType: this.groupBgByType(recs),
+      }));
+  }
+
+  // ==================== B4-5: 服药依从性趋势 ====================
+
+  async getAdherenceTrend(userId: string, month: string) {
+    const [year, mon] = month.split('-').map(Number);
+    const startDate = new Date(year, mon - 1, 1);
+    const endDate = new Date(year, mon, 0, 23, 59, 59, 999);
+
+    const records = await this.prisma.medicationRecord.findMany({
+      where: { userId, scheduledTime: { gte: startDate, lte: endDate } },
+      orderBy: { scheduledTime: 'asc' },
+    });
+
+    const dailyMap: Record<string, { taken: number; late: number; missed: number; total: number }> = {};
+    for (let d = 1; d <= endDate.getDate(); d++) {
+      const dateKey = `${year}-${String(mon).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      dailyMap[dateKey] = { taken: 0, late: 0, missed: 0, total: 0 };
+    }
+
+    for (const r of records) {
+      const dateKey = r.scheduledTime.toISOString().split('T')[0];
+      if (!dailyMap[dateKey]) {
+        dailyMap[dateKey] = { taken: 0, late: 0, missed: 0, total: 0 };
+      }
+      const day = dailyMap[dateKey];
+      day.total++;
+      if (r.status === 'taken') {
+        if (r.actualTime && r.actualTime > r.scheduledTime) {
+          day.late++;
+        } else {
+          day.taken++;
+        }
+      } else if (r.status === 'missed') {
+        day.missed++;
+      } else if (r.status === 'skipped') {
+        day.missed++;
+      }
+    }
+
+    const totalScheduled = records.length;
+    const totalTaken = records.filter((r) => r.status === 'taken').length;
+    const totalLate = records.filter((r) => r.status === 'taken' && r.actualTime && r.actualTime > r.scheduledTime).length;
+    const totalMissed = records.filter((r) => r.status === 'missed' || r.status === 'skipped').length;
+
+    const monthRate = totalScheduled > 0 ? Math.round((totalTaken / totalScheduled) * 100) : 0;
+
+    return {
+      month,
+      overallRate: monthRate,
+      totalRecords: totalScheduled,
+      taken: totalTaken - totalLate,
+      late: totalLate,
+      missed: totalMissed,
+      daily: Object.entries(dailyMap).map(([date, data]) => ({
+        date,
+        taken: data.taken,
+        late: data.late,
+        missed: data.missed,
+        total: data.total,
+        rate: data.total > 0 ? Math.round(((data.taken + data.late) / data.total) * 100) : 0,
+      })),
+    };
+  }
+
   /** 按类型分组血糖数据 */
   private groupBgByType(records: { type: string; value: any }[]) {
     const grouped: Record<string, number[]> = {};

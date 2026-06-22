@@ -264,4 +264,41 @@ export class HealthMetricsController {
       message: 'ok',
     };
   }
+
+  // ==================== B4-4: 通用趋势数据接口 ====================
+
+  @Get('trend')
+  @ApiOperation({ summary: '获取趋势数据（支持日/周/月粒度）' })
+  async getTrend(
+    @CurrentUser() user: UserPayload,
+    @Query('type') type: string,
+    @Query('period') period: string,
+    @Query('granularity') granularity: string,
+  ) {
+    return {
+      code: 0,
+      data: await this.healthMetricsService.getTrendData(
+        user.id,
+        (type as 'bp' | 'bg') || 'bp',
+        period || '7d',
+        (granularity as 'day' | 'week' | 'month') || 'day',
+      ),
+      message: 'ok',
+    };
+  }
+
+  // ==================== B4-5: 服药依从性趋势 ====================
+
+  @Get('adherence-trend')
+  @ApiOperation({ summary: '获取服药依从性月度趋势' })
+  async getAdherenceTrend(
+    @CurrentUser() user: UserPayload,
+    @Query('month') month: string,
+  ) {
+    return {
+      code: 0,
+      data: await this.healthMetricsService.getAdherenceTrend(user.id, month),
+      message: 'ok',
+    };
+  }
 }

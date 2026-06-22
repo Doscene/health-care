@@ -384,6 +384,59 @@ interface HealthCareApi {
         @Path("itemIndex") itemIndex: Int,
         @Body request: CheckItemRequest,
     ): ApiResponse<ShoppingListDto>
+
+    // ==================== Phase 4: 报告与数据可视化 ====================
+
+    /** 生成周报 */
+    @GET("reports/weekly")
+    suspend fun getWeeklyReport(
+        @Query("familyId") familyId: String,
+        @Query("weekStart") weekStart: String,
+    ): ApiResponse<WeeklyReportDto>
+
+    /** 生成月报 */
+    @GET("reports/monthly")
+    suspend fun getMonthlyReport(
+        @Query("familyId") familyId: String,
+        @Query("month") month: String,
+    ): ApiResponse<MonthlyReportDto>
+
+    /** 生成季度故事报告 */
+    @GET("reports/quarterly-story")
+    suspend fun getQuarterlyStory(
+        @Query("userId") userId: String,
+        @Query("quarter") quarter: String,
+    ): ApiResponse<QuarterlyStoryDto>
+
+    /** 导出复诊数据报告 */
+    @GET("reports/export")
+    suspend fun exportReport(
+        @Query("userId") userId: String,
+        @Query("startDate") startDate: String,
+        @Query("endDate") endDate: String,
+        @Query("format") format: String = "pdf",
+    ): ApiResponse<ExportReportDto>
+
+    /** 生成分享图文卡片 */
+    @GET("reports/share-card")
+    suspend fun getShareCard(
+        @Query("familyId") familyId: String,
+        @Query("weekStart") weekStart: String,
+    ): ApiResponse<ShareCardDto>
+
+    /** 获取趋势数据 */
+    @GET("record/trend")
+    suspend fun getTrendData(
+        @Query("type") type: String,
+        @Query("period") period: String,
+        @Query("granularity") granularity: String,
+    ): ApiResponse<List<TrendDataPoint>>
+
+    /** 获取服药依从性趋势 */
+    @GET("record/adherence-trend")
+    suspend fun getAdherenceTrend(
+        @Query("month") month: String,
+    ): ApiResponse<AdherenceTrendDto>
 }
 
 // ==================== DTOs ====================
@@ -931,4 +984,178 @@ data class SaveShoppingListRequest(
 
 data class CheckItemRequest(
     val checked: Boolean,
+)
+
+// ==================== Phase 4 DTOs: 报告与数据可视化 ====================
+
+data class WeeklyReportDto(
+    val id: String,
+    val familyId: String,
+    val weekStart: String,
+    val weekEnd: String,
+    val members: List<MemberWeeklySummaryDto>,
+    val upcomingEvents: List<UpcomingEventDto>,
+    val generatedAt: String,
+)
+
+data class MemberWeeklySummaryDto(
+    val userId: String,
+    val name: String,
+    val disease: Any? = null,
+    val moodEmoji: String,
+    val bpAvg: BpAvgDto? = null,
+    val bgAvg: Double? = null,
+    val bpStatus: String,
+    val bgStatus: String,
+    val adherenceRate: Int,
+    val measurementCount: Int,
+    val missedCount: Int,
+    val abnormalDays: Int,
+    val summaryText: String,
+    val suggestion: String? = null,
+)
+
+data class BpAvgDto(
+    val systolic: Int,
+    val diastolic: Int,
+)
+
+data class UpcomingEventDto(
+    val type: String,
+    val memberId: String,
+    val memberName: String,
+    val title: String,
+    val date: String,
+)
+
+data class MonthlyReportDto(
+    val id: String,
+    val familyId: String,
+    val month: String,
+    val members: List<MemberMonthlySummaryDto>,
+    val goals: List<FamilyGoalSummaryDto>,
+    val appointments: List<AppointmentSummaryDto>,
+    val generatedAt: String,
+)
+
+data class MemberMonthlySummaryDto(
+    val userId: String,
+    val name: String,
+    val disease: Any? = null,
+    val bpAvg: BpAvgDto? = null,
+    val bgAvg: Double? = null,
+    val bpWeeklyTrend: List<BpAvgDto?>,
+    val bgWeeklyTrend: List<Double?>,
+    val adherenceRate: Int,
+    val totalDays: Int,
+    val daysWithRecords: Int,
+    val abnormalDays: Int,
+)
+
+data class FamilyGoalSummaryDto(
+    val id: String,
+    val title: String,
+    val targetValue: Double,
+    val currentValue: Double,
+    val unit: String,
+    val achieved: Boolean,
+    val progress: Int,
+)
+
+data class QuarterlyStoryDto(
+    val userId: String,
+    val name: String,
+    val quarter: String,
+    val quarterLabel: String,
+    val bpTrend: TrendStoryDto,
+    val bgTrend: TrendStoryDoubleDto,
+    val adherence: AdherenceStoryDto,
+    val nextGoal: String,
+    val generatedAt: String,
+)
+
+data class TrendStoryDto(
+    val current: BpAvgDto? = null,
+    val previous: BpAvgDto? = null,
+    val change: Int,
+    val story: String,
+)
+
+data class TrendStoryDoubleDto(
+    val current: Double? = null,
+    val previous: Double? = null,
+    val change: Double,
+    val story: String,
+)
+
+data class AdherenceStoryDto(
+    val currentRate: Int,
+    val previousRate: Int,
+    val totalRecords: Int,
+    val missedCount: Int,
+    val missedDetails: List<String>,
+    val story: String,
+)
+
+data class ExportReportDto(
+    val html: String,
+    val format: String,
+    val fileName: String,
+    val metadata: ExportMetadataDto,
+)
+
+data class ExportMetadataDto(
+    val userName: String?,
+    val startDate: String,
+    val endDate: String,
+    val bpRecordCount: Int,
+    val bgRecordCount: Int,
+    val medicationRecordCount: Int,
+    val adherenceRate: Int,
+)
+
+data class ShareCardDto(
+    val html: String,
+    val reportId: String,
+    val memberName: String?,
+    val moodEmoji: String?,
+    val summaryText: String?,
+)
+
+data class TrendDataPoint(
+    val date: String? = null,
+    val weekStart: String? = null,
+    val month: String? = null,
+    val avgSystolic: Int? = null,
+    val avgDiastolic: Int? = null,
+    val movingAvgSystolic: Int? = null,
+    val movingAvgDiastolic: Int? = null,
+    val avgValue: Double? = null,
+    val count: Int,
+    val byType: List<BgTypeData>? = null,
+)
+
+data class BgTypeData(
+    val type: String,
+    val avgValue: Double,
+    val count: Int,
+)
+
+data class AdherenceTrendDto(
+    val month: String,
+    val overallRate: Int,
+    val totalRecords: Int,
+    val taken: Int,
+    val late: Int,
+    val missed: Int,
+    val daily: List<AdherenceDayDto>,
+)
+
+data class AdherenceDayDto(
+    val date: String,
+    val taken: Int,
+    val late: Int,
+    val missed: Int,
+    val total: Int,
+    val rate: Int,
 )

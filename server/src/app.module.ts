@@ -17,6 +17,7 @@ import { DietModule } from './modules/diet/diet.module.js';
 import { HealthMetricsModule } from './modules/health-metrics/health-metrics.module.js';
 import { OcrModule } from './modules/ocr/ocr.module.js';
 import { VoiceModule } from './modules/voice/voice.module.js';
+import { ReportModule } from './modules/report/report.module.js';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard.js';
 
 @Module({
@@ -36,6 +37,7 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard.js';
     HealthMetricsModule,
     OcrModule,
     VoiceModule,
+    ReportModule,
   ],
   controllers: [AppController],
   providers: [
