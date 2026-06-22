@@ -12,7 +12,10 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { HealthMetricsService } from './health-metrics.service.js';
-import { CurrentUser, type UserPayload } from '../../common/decorators/current-user.decorator.js';
+import {
+  CurrentUser,
+  type UserPayload,
+} from '../../common/decorators/current-user.decorator.js';
 
 @ApiTags('健康指标记录')
 @ApiBearerAuth()
@@ -96,7 +99,11 @@ export class HealthMetricsController {
   ) {
     return {
       code: 0,
-      data: await this.healthMetricsService.updateBpRecord(user.id, recordId, body),
+      data: await this.healthMetricsService.updateBpRecord(
+        user.id,
+        recordId,
+        body,
+      ),
       message: '更新成功',
     };
   }
@@ -191,7 +198,11 @@ export class HealthMetricsController {
   ) {
     return {
       code: 0,
-      data: await this.healthMetricsService.updateBgRecord(user.id, recordId, body),
+      data: await this.healthMetricsService.updateBgRecord(
+        user.id,
+        recordId,
+        body,
+      ),
       message: '更新成功',
     };
   }

@@ -47,7 +47,11 @@ export class MedicationReminderScheduler {
             medicationId: med.id,
             scheduledTime: {
               gte: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
-              lt: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1),
+              lt: new Date(
+                now.getFullYear(),
+                now.getMonth(),
+                now.getDate() + 1,
+              ),
             },
           },
           orderBy: { scheduledTime: 'desc' },
@@ -87,7 +91,9 @@ export class MedicationReminderScheduler {
       }
 
       if (reminded > 0) {
-        this.logger.log(`Sent ${reminded} medication reminders at ${currentTime}`);
+        this.logger.log(
+          `Sent ${reminded} medication reminders at ${currentTime}`,
+        );
       }
     } catch (error) {
       this.logger.error('Medication reminder scan failed', error);

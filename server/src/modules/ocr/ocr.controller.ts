@@ -8,7 +8,10 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { OcrService } from './ocr.service.js';
-import { CurrentUser, type UserPayload } from '../../common/decorators/current-user.decorator.js';
+import {
+  CurrentUser,
+  type UserPayload,
+} from '../../common/decorators/current-user.decorator.js';
 
 @ApiTags('OCR识别')
 @ApiBearerAuth()
@@ -42,9 +45,7 @@ export class OcrController {
 
   @Get('logs')
   @ApiOperation({ summary: '获取最近OCR调用日志' })
-  async getLogs(
-    @CurrentUser() user: UserPayload,
-  ) {
+  async getLogs(@CurrentUser() user: UserPayload) {
     return {
       code: 0,
       data: this.ocrService.getRecentLogs(20),

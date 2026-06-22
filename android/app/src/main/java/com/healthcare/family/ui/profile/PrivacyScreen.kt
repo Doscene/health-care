@@ -40,6 +40,8 @@ fun PrivacyScreen(
     onBack: () -> Unit,
 ) {
     val isElderlyMode by tokenManager.isElderlyMode.collectAsState(initial = false)
+    val pushMedReminder by tokenManager.pushMedicationReminder.collectAsState(initial = true)
+    val pushRiskAlert by tokenManager.pushRiskAlert.collectAsState(initial = true)
     val scope = rememberCoroutineScope()
     var shareDataWithFamily by remember { mutableStateOf(true) }
 
@@ -79,8 +81,10 @@ fun PrivacyScreen(
             PrivacySwitchItem(
                 title = "接收用药提醒推送",
                 subtitle = "通过极光推送接收服药提醒",
-                checked = true,
-                onCheckedChange = { /* TODO */ },
+                checked = pushMedReminder,
+                onCheckedChange = { enabled ->
+                    scope.launch { tokenManager.setPushMedicationReminder(enabled) }
+                },
             )
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
@@ -88,8 +92,10 @@ fun PrivacyScreen(
             PrivacySwitchItem(
                 title = "接收风险告警推送",
                 subtitle = "当健康指标异常时通知家人",
-                checked = true,
-                onCheckedChange = { /* TODO */ },
+                checked = pushRiskAlert,
+                onCheckedChange = { enabled ->
+                    scope.launch { tokenManager.setPushRiskAlert(enabled) }
+                },
             )
         }
     }

@@ -77,6 +77,14 @@ interface HealthCareApi {
         @Path("memberId") memberId: String,
     ): ApiResponse<Unit>
 
+    /** 更新成员数据可见性配置 */
+    @PUT("family/{familyId}/members/{memberId}/visibility")
+    suspend fun updateMemberVisibility(
+        @Path("familyId") familyId: String,
+        @Path("memberId") memberId: String,
+        @Body request: UpdateMemberVisibilityRequest,
+    ): ApiResponse<Unit>
+
     // ==================== 复诊计划 ====================
 
     /** 获取复诊计划列表 */
@@ -245,6 +253,137 @@ interface HealthCareApi {
     /** 查询食材替换 */
     @GET("diet/substitution")
     suspend fun getSubstitutions(@Query("ingredient") ingredient: String): ApiResponse<SubstitutionDto>
+
+    // ==================== Phase 3: 家庭协作 ====================
+
+    /** 获取家庭成员健康摘要 */
+    @GET("family/{familyId}/summary")
+    suspend fun getFamilySummary(@Path("familyId") familyId: String): ApiResponse<List<MemberHealthSummaryDto>>
+
+    /** 获取成员健康详情 */
+    @GET("family/{familyId}/members/{memberId}/detail")
+    suspend fun getMemberDetail(
+        @Path("familyId") familyId: String,
+        @Path("memberId") memberId: String,
+        @Query("metric") metric: String? = null,
+    ): ApiResponse<MemberDetailDto>
+
+    /** 获取夫妻默契值 */
+    @GET("family/{familyId}/chemistry")
+    suspend fun getChemistry(@Path("familyId") familyId: String): ApiResponse<ChemistryDto>
+
+    /** 获取互相提醒列表 */
+    @GET("family/{familyId}/reminders")
+    suspend fun getReminders(
+        @Path("familyId") familyId: String,
+        @Query("box") box: String? = null,
+    ): ApiResponse<List<FamilyReminderDto>>
+
+    /** 发送互相提醒 */
+    @POST("family/{familyId}/reminders")
+    suspend fun sendReminder(
+        @Path("familyId") familyId: String,
+        @Body request: SendReminderRequest,
+    ): ApiResponse<FamilyReminderDto>
+
+    /** 完成提醒 */
+    @POST("family/{familyId}/reminders/{reminderId}/complete")
+    suspend fun completeReminder(
+        @Path("familyId") familyId: String,
+        @Path("reminderId") reminderId: String,
+    ): ApiResponse<Unit>
+
+    /** 获取家庭目标列表 */
+    @GET("family/{familyId}/goals")
+    suspend fun getGoals(@Path("familyId") familyId: String): ApiResponse<List<FamilyGoalDto>>
+
+    /** 创建家庭目标 */
+    @POST("family/{familyId}/goals")
+    suspend fun createGoal(
+        @Path("familyId") familyId: String,
+        @Body request: CreateGoalRequest,
+    ): ApiResponse<FamilyGoalDto>
+
+    /** 更新家庭目标 */
+    @PUT("family/{familyId}/goals/{goalId}")
+    suspend fun updateGoal(
+        @Path("familyId") familyId: String,
+        @Path("goalId") goalId: String,
+        @Body request: UpdateGoalRequest,
+    ): ApiResponse<FamilyGoalDto>
+
+    /** 删除家庭目标 */
+    @DELETE("family/{familyId}/goals/{goalId}")
+    suspend fun deleteGoal(
+        @Path("familyId") familyId: String,
+        @Path("goalId") goalId: String,
+    ): ApiResponse<Unit>
+
+    /** 获取家庭挑战列表 */
+    @GET("family/{familyId}/challenges")
+    suspend fun getChallenges(@Path("familyId") familyId: String): ApiResponse<List<FamilyChallengeDto>>
+
+    /** 创建家庭挑战 */
+    @POST("family/{familyId}/challenges")
+    suspend fun createChallenge(
+        @Path("familyId") familyId: String,
+        @Body request: CreateChallengeRequest,
+    ): ApiResponse<FamilyChallengeDto>
+
+    /** 参加挑战 */
+    @POST("family/{familyId}/challenges/{challengeId}/join")
+    suspend fun joinChallenge(
+        @Path("familyId") familyId: String,
+        @Path("challengeId") challengeId: String,
+    ): ApiResponse<Unit>
+
+    /** 获取挑战详情 */
+    @GET("family/{familyId}/challenges/{challengeId}")
+    suspend fun getChallengeDetail(
+        @Path("familyId") familyId: String,
+        @Path("challengeId") challengeId: String,
+    ): ApiResponse<FamilyChallengeDto>
+
+    // ==================== Phase 3: 饮食扩展 ====================
+
+    /** 记录饮食 */
+    @POST("diet/record")
+    suspend fun recordDiet(@Body request: RecordDietRequest): ApiResponse<DietRecordDto>
+
+    /** 获取饮食记录列表 */
+    @GET("diet/record")
+    suspend fun getDietRecords(@Query("limit") limit: Int = 30): ApiResponse<List<DietRecordDto>>
+
+    /** 获取推荐食谱（带过滤） */
+    @GET("diet/recipe/recommended")
+    suspend fun getRecommendedRecipes(
+        @Query("diseases") diseases: String? = null,
+        @Query("people") people: String? = null,
+    ): ApiResponse<List<RecipeDto>>
+
+    /** 获取自定义菜单 */
+    @GET("diet/menu/custom")
+    suspend fun getCustomMenu(): ApiResponse<CustomMenuDto>
+
+    /** 保存自定义菜单 */
+    @POST("diet/menu/custom")
+    suspend fun saveCustomMenu(@Body request: SaveCustomMenuRequest): ApiResponse<CustomMenuDto>
+
+    /** 获取购物清单 */
+    @GET("diet/shopping-list")
+    suspend fun getShoppingList(): ApiResponse<ShoppingListDto>
+
+    /** 保存购物清单 */
+    @POST("diet/shopping-list/save")
+    suspend fun saveShoppingList(@Body request: SaveShoppingListRequest): ApiResponse<ShoppingListDto>
+
+    /** 勾选购物项 */
+    @PUT("diet/shopping-list/{listId}/item/{itemIndex}/check")
+    suspend fun checkShoppingItem(
+        @Path("listId") listId: String,
+        @Path("itemIndex") itemIndex: Int,
+        @Body request: CheckItemRequest,
+    ): ApiResponse<ShoppingListDto>
 }
 
 // ==================== DTOs ====================
@@ -341,6 +480,10 @@ data class UpdateMemberRoleRequest(
 
 data class UpdateMemberNicknameRequest(
     val nickname: String,
+)
+
+data class UpdateMemberVisibilityRequest(
+    val visibility: Map<String, String>,
 )
 
 // ==================== 首页 DTOs ====================
@@ -638,4 +781,154 @@ data class FirstAidGuideDto(
     val content: String,
     val steps: Any? = null,
     val order: Int = 0,
+)
+
+// ==================== Phase 3 DTOs: 家庭协作 ====================
+
+data class MemberHealthSummaryDto(
+    val userId: String,
+    val name: String,
+    val diseases: List<String>,
+    val latestBp: BpSummaryDto? = null,
+    val latestBg: BgSummaryDto? = null,
+    val medicationCount: Int = 0,
+    val status: String? = null,
+)
+
+data class MemberDetailDto(
+    val userId: String,
+    val name: String,
+    val bpRecords: List<BpRecordDto> = emptyList(),
+    val bgRecords: List<BgRecordDto> = emptyList(),
+    val medications: List<MedicationDto> = emptyList(),
+)
+
+data class ChemistryDto(
+    val score: Int,
+    val totalReminders: Int = 0,
+    val completedReminders: Int = 0,
+    val description: String? = null,
+)
+
+data class FamilyReminderDto(
+    val id: String,
+    val fromUserId: String,
+    val fromUserName: String? = null,
+    val toUserId: String,
+    val type: String,
+    val message: String? = null,
+    val status: String,
+    val createdAt: String,
+)
+
+data class SendReminderRequest(
+    val targetUserId: String,
+    val type: String,
+    val message: String? = null,
+)
+
+data class FamilyGoalDto(
+    val id: String,
+    val type: String,
+    val title: String,
+    val targetValue: Int,
+    val currentValue: Int = 0,
+    val unit: String,
+    val startDate: String,
+    val endDate: String,
+    val status: String = "active",
+    val participants: List<String> = emptyList(),
+)
+
+data class CreateGoalRequest(
+    val type: String,
+    val title: String,
+    val targetValue: Int,
+    val unit: String,
+    val participantIds: List<String>,
+    val startDate: String,
+    val endDate: String,
+)
+
+data class UpdateGoalRequest(
+    val title: String? = null,
+    val targetValue: Int? = null,
+    val currentValue: Int? = null,
+    val endDate: String? = null,
+)
+
+data class FamilyChallengeDto(
+    val id: String,
+    val type: String,
+    val title: String,
+    val description: String,
+    val startDate: String,
+    val endDate: String? = null,
+    val status: String = "active",
+    val participants: List<ChallengeParticipantDto> = emptyList(),
+)
+
+data class ChallengeParticipantDto(
+    val userId: String,
+    val name: String? = null,
+    val joinedAt: String? = null,
+)
+
+data class CreateChallengeRequest(
+    val type: String,
+    val title: String,
+    val description: String,
+    val participantIds: List<String>,
+    val startDate: String,
+    val endDate: String? = null,
+)
+
+// ==================== Phase 3 DTOs: 饮食扩展 ====================
+
+data class DietRecordDto(
+    val id: String,
+    val mealType: String,
+    val description: String,
+    val imageUrl: String? = null,
+    val recordedAt: String,
+)
+
+data class RecordDietRequest(
+    val mealType: String,
+    val description: String,
+    val imageUrl: String? = null,
+)
+
+data class CustomMenuDto(
+    val id: String? = null,
+    val breakfast: List<RecipeDto> = emptyList(),
+    val lunch: List<RecipeDto> = emptyList(),
+    val dinner: List<RecipeDto> = emptyList(),
+)
+
+data class SaveCustomMenuRequest(
+    val breakfast: List<String> = emptyList(),
+    val lunch: List<String> = emptyList(),
+    val dinner: List<String> = emptyList(),
+)
+
+data class ShoppingListDto(
+    val id: String? = null,
+    val items: List<ShoppingItemDto> = emptyList(),
+    val generatedAt: String? = null,
+)
+
+data class ShoppingItemDto(
+    val name: String,
+    val amount: String? = null,
+    val unit: String? = null,
+    val checked: Boolean = false,
+)
+
+data class SaveShoppingListRequest(
+    val items: List<ShoppingItemDto>,
+)
+
+data class CheckItemRequest(
+    val checked: Boolean,
 )

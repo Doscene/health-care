@@ -26,7 +26,15 @@ export class AlertService {
       orderBy: { createdAt: 'desc' },
       take: 20,
       include: {
-        inquiry: { select: { id: true, question: true, options: true, answer: true, answeredAt: true } },
+        inquiry: {
+          select: {
+            id: true,
+            question: true,
+            options: true,
+            answer: true,
+            answeredAt: true,
+          },
+        },
       },
     });
 
@@ -108,7 +116,10 @@ export class AlertService {
               persistentResult.triggerType,
             );
           }
-          return { level: persistentResult.level, message: persistentResult.message };
+          return {
+            level: persistentResult.level,
+            message: persistentResult.message,
+          };
         }
       }
 
@@ -146,7 +157,10 @@ export class AlertService {
               persistentResult.triggerType,
             );
           }
-          return { level: persistentResult.level, message: persistentResult.message };
+          return {
+            level: persistentResult.level,
+            message: persistentResult.message,
+          };
         }
       }
 

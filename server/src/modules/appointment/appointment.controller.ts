@@ -10,7 +10,10 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AppointmentService } from './appointment.service.js';
-import { CurrentUser, type UserPayload } from '../../common/decorators/current-user.decorator.js';
+import {
+  CurrentUser,
+  type UserPayload,
+} from '../../common/decorators/current-user.decorator.js';
 
 @ApiTags('复诊计划')
 @ApiBearerAuth()

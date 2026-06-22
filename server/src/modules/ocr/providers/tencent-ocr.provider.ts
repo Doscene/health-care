@@ -1,7 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createHmac, createHash } from 'crypto';
-import { OcrProvider, OcrResult, OcrLine } from '../interfaces/ocr-provider.interface.js';
+import {
+  OcrProvider,
+  OcrResult,
+  OcrLine,
+} from '../interfaces/ocr-provider.interface.js';
 
 /**
  * 腾讯云OCR Provider
@@ -19,15 +23,24 @@ export class TencentOcrProvider implements OcrProvider {
 
   constructor(private readonly configService: ConfigService) {
     this.secretId = this.configService.get<string>('TENCENT_OCR_SECRET_ID', '');
-    this.secretKey = this.configService.get<string>('TENCENT_OCR_SECRET_KEY', '');
-    this.region = this.configService.get<string>('TENCENT_OCR_REGION', 'ap-guangzhou');
+    this.secretKey = this.configService.get<string>(
+      'TENCENT_OCR_SECRET_KEY',
+      '',
+    );
+    this.region = this.configService.get<string>(
+      'TENCENT_OCR_REGION',
+      'ap-guangzhou',
+    );
   }
 
   /**
    * 生成腾讯云API签名
    * 使用 TC3-HMAC-SHA256 签名方法
    */
-  private generateSignature(payload: string, timestamp: number): {
+  private generateSignature(
+    payload: string,
+    timestamp: number,
+  ): {
     authorization: string;
     timestamp: number;
   } {
@@ -42,20 +55,32 @@ export class TencentOcrProvider implements OcrProvider {
     const canonicalQueryString = '';
     const canonicalHeaders = `content-type:application/json\nhost:ocr.tencentcloudapi.com\nx-tc-action:${action.toLowerCase()}\n`;
     const signedHeaders = 'content-type;host;x-tc-action';
-    const hashedRequestPayload = createHash('sha256').update(payload).digest('hex');
+    const hashedRequestPayload = createHash('sha256')
+      .update(payload)
+      .digest('hex');
     const canonicalRequest = `${httpRequestMethod}\n${canonicalUri}\n${canonicalQueryString}\n${canonicalHeaders}\n${signedHeaders}\n${hashedRequestPayload}`;
 
     // 2. 拼接待签名字符串
     const algorithm = 'TC3-HMAC-SHA256';
     const credentialScope = `${date}/${service}/tc3_request`;
-    const hashedCanonicalRequest = createHash('sha256').update(canonicalRequest).digest('hex');
+    const hashedCanonicalRequest = createHash('sha256')
+      .update(canonicalRequest)
+      .digest('hex');
     const stringToSign = `${algorithm}\n${timestamp}\n${credentialScope}\n${hashedCanonicalRequest}`;
 
     // 3. 计算签名
-    const secretDate = createHmac('sha256', `TC3${this.secretKey}`).update(date).digest();
-    const secretService = createHmac('sha256', secretDate).update(service).digest();
-    const secretSigning = createHmac('sha256', secretService).update('tc3_request').digest();
-    const signature = createHmac('sha256', secretSigning).update(stringToSign).digest('hex');
+    const secretDate = createHmac('sha256', `TC3${this.secretKey}`)
+      .update(date)
+      .digest();
+    const secretService = createHmac('sha256', secretDate)
+      .update(service)
+      .digest();
+    const secretSigning = createHmac('sha256', secretService)
+      .update('tc3_request')
+      .digest();
+    const signature = createHmac('sha256', secretSigning)
+      .update(stringToSign)
+      .digest('hex');
 
     // 4. 拼接 Authorization
     const authorization = `${algorithm} Credential=${this.secretId}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
@@ -86,12 +111,12 @@ export class TencentOcrProvider implements OcrProvider {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Host': 'ocr.tencentcloudapi.com',
+        Host: 'ocr.tencentcloudapi.com',
         'X-TC-Action': action,
         'X-TC-Version': version,
         'X-TC-Timestamp': timestamp.toString(),
         'X-TC-Region': this.region,
-        'Authorization': authorization,
+        Authorization: authorization,
       },
       body: payload,
     });
@@ -103,7 +128,9 @@ export class TencentOcrProvider implements OcrProvider {
     const data = await response.json();
 
     if (data.Response?.Error) {
-      throw new Error(`腾讯OCR错误: ${data.Response.Error.Code} - ${data.Response.Error.Message}`);
+      throw new Error(
+        `腾讯OCR错误: ${data.Response.Error.Code} - ${data.Response.Error.Message}`,
+      );
     }
 
     // 解析结果

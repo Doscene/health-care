@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.Card
@@ -82,6 +83,28 @@ fun DietScreen(
                     title = "食材替换",
                     subtitle = "查找食材替代方案",
                     onClick = { onNavigate("diet/substitution") },
+                    modifier = Modifier.weight(1f),
+                )
+            }
+        }
+
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                DietQuickCard(
+                    icon = Icons.Default.CameraAlt,
+                    title = "记录饮食",
+                    subtitle = "拍照或手动记录今天吃了什么",
+                    onClick = { onNavigate("diet/record") },
+                    modifier = Modifier.weight(1f),
+                )
+                DietQuickCard(
+                    icon = Icons.Default.SwapHoriz,
+                    title = "购物清单",
+                    subtitle = "根据菜单生成购物清单",
+                    onClick = { onNavigate("diet/shopping") },
                     modifier = Modifier.weight(1f),
                 )
             }

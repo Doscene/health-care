@@ -64,7 +64,11 @@ export class RiskScanScheduler {
               message: `您连续${missedCount}次未按时服药，请留意`,
             });
             if (alertId) {
-              await this.riskEngine.createInquiry(userId, alertId, 'missed_dose');
+              await this.riskEngine.createInquiry(
+                userId,
+                alertId,
+                'missed_dose',
+              );
             }
           }
         }

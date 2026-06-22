@@ -1,4 +1,8 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -91,12 +95,17 @@ export class MedicationService {
 
     const updateData: any = {};
     if (data.name !== undefined) updateData.name = data.name;
-    if (data.specification !== undefined) updateData.specification = data.specification;
-    if (data.dosagePerTime !== undefined) updateData.dosagePerTime = data.dosagePerTime;
-    if (data.frequencyPerDay !== undefined) updateData.frequencyPerDay = data.frequencyPerDay;
+    if (data.specification !== undefined)
+      updateData.specification = data.specification;
+    if (data.dosagePerTime !== undefined)
+      updateData.dosagePerTime = data.dosagePerTime;
+    if (data.frequencyPerDay !== undefined)
+      updateData.frequencyPerDay = data.frequencyPerDay;
     if (data.timeSlots !== undefined) updateData.timeSlots = data.timeSlots;
-    if (data.remindTimes !== undefined) updateData.remindTimes = data.remindTimes;
-    if (data.endDate !== undefined) updateData.endDate = data.endDate ? new Date(data.endDate) : null;
+    if (data.remindTimes !== undefined)
+      updateData.remindTimes = data.remindTimes;
+    if (data.endDate !== undefined)
+      updateData.endDate = data.endDate ? new Date(data.endDate) : null;
     if (data.notes !== undefined) updateData.notes = data.notes;
     if (data.status !== undefined) updateData.status = data.status;
 
@@ -126,7 +135,9 @@ export class MedicationService {
   ) {
     const validStatuses = ['taken', 'skipped', 'missed'];
     if (!validStatuses.includes(data.status)) {
-      throw new BadRequestException(`无效状态，允许值：${validStatuses.join(', ')}`);
+      throw new BadRequestException(
+        `无效状态，允许值：${validStatuses.join(', ')}`,
+      );
     }
 
     return this.prisma.medicationRecord.create({
@@ -143,7 +154,11 @@ export class MedicationService {
   }
 
   /** 获取用药记录 */
-  async getMedicationRecords(userId: string, medicationId?: string, limit = 30) {
+  async getMedicationRecords(
+    userId: string,
+    medicationId?: string,
+    limit = 30,
+  ) {
     const where: any = { userId };
     if (medicationId) where.medicationId = medicationId;
 
@@ -180,8 +195,12 @@ export class MedicationService {
 
     // 匹配当前用药
     const matched = conflicts.filter((c) => {
-      const matchA = medNames.some((n) => c.drugA.includes(n) || n.includes(c.drugA));
-      const matchB = medNames.some((n) => c.drugB.includes(n) || n.includes(c.drugB));
+      const matchA = medNames.some(
+        (n) => c.drugA.includes(n) || n.includes(c.drugA),
+      );
+      const matchB = medNames.some(
+        (n) => c.drugB.includes(n) || n.includes(c.drugB),
+      );
       return matchA && matchB && c.drugA !== c.drugB;
     });
 
@@ -230,7 +249,8 @@ export class MedicationService {
     const days = Array.from(calendarMap.entries()).map(([date, recs]) => {
       const taken = recs.filter((r) => r.status === 'taken').length;
       const total = recs.length;
-      const status = taken === total ? 'complete' : taken > 0 ? 'partial' : 'missed';
+      const status =
+        taken === total ? 'complete' : taken > 0 ? 'partial' : 'missed';
       return {
         date,
         status,

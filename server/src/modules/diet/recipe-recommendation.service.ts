@@ -28,13 +28,7 @@ export class RecipeRecommendationService {
   private static readonly LOW_GI_VALUES = ['low', 'medium-low'];
 
   async recommend(query: RecommendQuery) {
-    const {
-      diseases = [],
-      servings,
-      mealType,
-      keyword,
-      limit = 30,
-    } = query;
+    const { diseases = [], servings, mealType, keyword, limit = 30 } = query;
 
     const where: Record<string, unknown> = {};
 
@@ -80,9 +74,10 @@ export class RecipeRecommendationService {
     }
 
     // servings 缩放（仅在返回数据时计算，不影响原始数据）
-    const result = servings && servings > 0
-      ? recipes.map((r) => this.scaleRecipe(r, servings))
-      : recipes;
+    const result =
+      servings && servings > 0
+        ? recipes.map((r) => this.scaleRecipe(r, servings))
+        : recipes;
 
     return {
       total: result.length,
@@ -103,7 +98,8 @@ export class RecipeRecommendationService {
 
   /** 按目标人数缩放 ingredients 中的 quantity（返回新对象） */
   private scaleRecipe(recipe: any, targetServings: number) {
-    if (!Array.isArray(recipe.ingredients) || recipe.servings <= 0) return recipe;
+    if (!Array.isArray(recipe.ingredients) || recipe.servings <= 0)
+      return recipe;
     const ratio = targetServings / recipe.servings;
     const scaled = recipe.ingredients.map((it: any) => {
       if (it && typeof it === 'object') {

@@ -1,7 +1,10 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { HomeService } from './home.service.js';
-import { CurrentUser, type UserPayload } from '../../common/decorators/current-user.decorator.js';
+import {
+  CurrentUser,
+  type UserPayload,
+} from '../../common/decorators/current-user.decorator.js';
 
 @ApiTags('首页')
 @ApiBearerAuth()

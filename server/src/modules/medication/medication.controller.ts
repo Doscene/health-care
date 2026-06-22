@@ -12,7 +12,10 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { MedicationService } from './medication.service.js';
-import { CurrentUser, type UserPayload } from '../../common/decorators/current-user.decorator.js';
+import {
+  CurrentUser,
+  type UserPayload,
+} from '../../common/decorators/current-user.decorator.js';
 
 @ApiTags('用药管理')
 @ApiBearerAuth()
@@ -92,7 +95,11 @@ export class MedicationController {
   ) {
     return {
       code: 0,
-      data: await this.medicationService.updateMedication(user.id, medicationId, body),
+      data: await this.medicationService.updateMedication(
+        user.id,
+        medicationId,
+        body,
+      ),
       message: '更新成功',
     };
   }
@@ -106,7 +113,10 @@ export class MedicationController {
   ) {
     return {
       code: 0,
-      data: await this.medicationService.deleteMedication(user.id, medicationId),
+      data: await this.medicationService.deleteMedication(
+        user.id,
+        medicationId,
+      ),
       message: '已删除',
     };
   }
@@ -121,7 +131,11 @@ export class MedicationController {
   ) {
     return {
       code: 0,
-      data: await this.medicationService.confirmMedication(user.id, medicationId, body),
+      data: await this.medicationService.confirmMedication(
+        user.id,
+        medicationId,
+        body,
+      ),
       message: '已确认',
     };
   }

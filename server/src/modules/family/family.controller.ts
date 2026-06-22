@@ -10,13 +10,21 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBearerAuth,
+  ApiQuery,
+} from '@nestjs/swagger';
 import { FamilyService } from './family.service.js';
 import { FamilySummaryService } from './family-summary.service.js';
 import { MutualReminderService } from './mutual-reminder.service.js';
 import { FamilyGoalService } from './family-goal.service.js';
 import { FamilyChallengeService } from './family-challenge.service.js';
-import { CurrentUser, type UserPayload } from '../../common/decorators/current-user.decorator.js';
+import {
+  CurrentUser,
+  type UserPayload,
+} from '../../common/decorators/current-user.decorator.js';
 import { Public } from '../../common/decorators/public.decorator.js';
 
 @ApiTags('家庭圈')
@@ -29,7 +37,7 @@ export class FamilyController {
     private readonly reminderService: MutualReminderService,
     private readonly goalService: FamilyGoalService,
     private readonly challengeService: FamilyChallengeService,
-  ) { }
+  ) {}
 
   // ==================== 基础家庭圈 ====================
 
@@ -153,16 +161,33 @@ export class FamilyController {
   ) {
     return {
       code: 0,
-      data: await this.familyService.removeMember(
-        familyId,
-        memberId,
-        user.id,
-      ),
+      data: await this.familyService.removeMember(familyId, memberId, user.id),
       message: '成员已移除',
     };
   }
 
   // ==================== B3-1 家庭成员健康摘要 ====================
+
+  @Put(':familyId/members/:memberId/visibility')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: '更新成员数据可见性配置' })
+  async updateMemberVisibility(
+    @CurrentUser() user: UserPayload,
+    @Param('familyId') familyId: string,
+    @Param('memberId') memberId: string,
+    @Body() body: { visibility: Record<string, string> },
+  ) {
+    return {
+      code: 0,
+      data: await this.familyService.updateMemberVisibility(
+        familyId,
+        memberId,
+        user.id,
+        body.visibility,
+      ),
+      message: '隐私设置已更新',
+    };
+  }
 
   @Get(':familyId/summary')
   @ApiOperation({ summary: '获取家庭成员健康摘要' })
@@ -181,7 +206,11 @@ export class FamilyController {
 
   @Get(':familyId/members/:memberId/detail')
   @ApiOperation({ summary: '获取成员健康数据详情' })
-  @ApiQuery({ name: 'metric', required: false, description: '指标类型：bp/bg/medication/diet' })
+  @ApiQuery({
+    name: 'metric',
+    required: false,
+    description: '指标类型：bp/bg/medication/diet',
+  })
   async getMemberDetail(
     @CurrentUser() user: UserPayload,
     @Param('familyId') familyId: string,
@@ -330,7 +359,13 @@ export class FamilyController {
     @CurrentUser() user: UserPayload,
     @Param('familyId') familyId: string,
     @Param('goalId') goalId: string,
-    @Body() body: { title?: string; targetValue?: number; currentValue?: number; endDate?: string },
+    @Body()
+    body: {
+      title?: string;
+      targetValue?: number;
+      currentValue?: number;
+      endDate?: string;
+    },
   ) {
     return {
       code: 0,

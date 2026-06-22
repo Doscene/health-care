@@ -8,56 +8,77 @@ export class HomeService {
   /** 获取患者首页数据 */
   async getPatientHomeData(userId: string) {
     const now = new Date();
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayStart = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+    );
     const todayEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
 
     // 并行查询
-    const [user, latestBp, latestBg, todayMedications, activeAlerts, todayAppointments] =
-      await Promise.all([
-        // 用户信息
-        this.prisma.user.findUnique({
-          where: { id: userId },
-          select: { name: true, selfRole: true, diseases: true },
-        }),
-        // 最近一条血压记录
-        this.prisma.bloodPressureRecord.findFirst({
-          where: { userId },
-          orderBy: { recordedAt: 'desc' },
-          select: { systolic: true, diastolic: true, heartRate: true, recordedAt: true },
-        }),
-        // 最近一条血糖记录
-        this.prisma.bloodSugarRecord.findFirst({
-          where: { userId },
-          orderBy: { recordedAt: 'desc' },
-          select: { type: true, value: true, recordedAt: true },
-        }),
-        // 今日待服药计划
-        this.prisma.medication.findMany({
-          where: { userId, status: 'active' },
-          select: {
-            id: true,
-            name: true,
-            dosagePerTime: true,
-            frequencyPerDay: true,
-            timeSlots: true,
-          },
-        }),
-        // 活跃风险预警
-        this.prisma.riskAlert.findMany({
-          where: { userId, status: 'active' },
-          orderBy: { createdAt: 'desc' },
-          take: 3,
-          select: { id: true, level: true, triggerType: true, triggerValue: true, createdAt: true },
-        }),
-        // 今日复诊计划
-        this.prisma.appointment.findMany({
-          where: {
-            userId,
-            date: { gte: todayStart, lt: todayEnd },
-          },
-          select: { id: true, hospital: true, department: true, date: true },
-        }),
-      ]);
+    const [
+      user,
+      latestBp,
+      latestBg,
+      todayMedications,
+      activeAlerts,
+      todayAppointments,
+    ] = await Promise.all([
+      // 用户信息
+      this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { name: true, selfRole: true, diseases: true },
+      }),
+      // 最近一条血压记录
+      this.prisma.bloodPressureRecord.findFirst({
+        where: { userId },
+        orderBy: { recordedAt: 'desc' },
+        select: {
+          systolic: true,
+          diastolic: true,
+          heartRate: true,
+          recordedAt: true,
+        },
+      }),
+      // 最近一条血糖记录
+      this.prisma.bloodSugarRecord.findFirst({
+        where: { userId },
+        orderBy: { recordedAt: 'desc' },
+        select: { type: true, value: true, recordedAt: true },
+      }),
+      // 今日待服药计划
+      this.prisma.medication.findMany({
+        where: { userId, status: 'active' },
+        select: {
+          id: true,
+          name: true,
+          dosagePerTime: true,
+          frequencyPerDay: true,
+          timeSlots: true,
+        },
+      }),
+      // 活跃风险预警
+      this.prisma.riskAlert.findMany({
+        where: { userId, status: 'active' },
+        orderBy: { createdAt: 'desc' },
+        take: 3,
+        select: {
+          id: true,
+          level: true,
+          triggerType: true,
+          triggerValue: true,
+          createdAt: true,
+        },
+      }),
+      // 今日复诊计划
+      this.prisma.appointment.findMany({
+        where: {
+          userId,
+          date: { gte: todayStart, lt: todayEnd },
+        },
+        select: { id: true, hospital: true, department: true, date: true },
+      }),
+    ]);
 
     return {
       user: {
@@ -194,11 +215,17 @@ export class HomeService {
               selfRole: am.user.selfRole,
               diseases: am.user.diseases,
               latestBp: bp
-                ? { systolic: bp.systolic, diastolic: bp.diastolic, heartRate: bp.heartRate }
+                ? {
+                    systolic: bp.systolic,
+                    diastolic: bp.diastolic,
+                    heartRate: bp.heartRate,
+                  }
                 : null,
               latestBg: bg ? { type: bg.type, value: Number(bg.value) } : null,
               activeAlertCount: alerts.length,
-              hasHighAlert: alerts.some((a) => a.level === 'high' || a.level === 'critical'),
+              hasHighAlert: alerts.some(
+                (a) => a.level === 'high' || a.level === 'critical',
+              ),
             };
           }),
       })),

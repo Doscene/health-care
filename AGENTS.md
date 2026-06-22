@@ -36,3 +36,8 @@ PRs should state scope, affected area (`android`, `server`, `docs`), linked task
 
 ## Repository-Specific Notes
 Treat `android/` and `server/` as separate build roots. Do not “clean up” the known `include ':helath'` typo in `android/settings.gradle` unless the task requires it.
+
+## 交互语言
+
+- **时区**：GMT+8
+- **语言**：简体中文

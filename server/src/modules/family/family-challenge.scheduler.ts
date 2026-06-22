@@ -33,7 +33,9 @@ export class FamilyChallengeScheduler {
         select: { id: true },
       });
 
-      this.logger.log(`扫描 ${active.length} 个进行中挑战，评估日期 ${yesterday.toISOString()}`);
+      this.logger.log(
+        `扫描 ${active.length} 个进行中挑战，评估日期 ${yesterday.toISOString()}`,
+      );
 
       for (const c of active) {
         try {

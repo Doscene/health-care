@@ -10,10 +10,18 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBearerAuth,
+  ApiQuery,
+} from '@nestjs/swagger';
 import { DietService } from './diet.service.js';
 import { RecipeRecommendationService } from './recipe-recommendation.service.js';
-import { CurrentUser, type UserPayload } from '../../common/decorators/current-user.decorator.js';
+import {
+  CurrentUser,
+  type UserPayload,
+} from '../../common/decorators/current-user.decorator.js';
 
 @ApiTags('饮食管理')
 @ApiBearerAuth()
@@ -28,7 +36,11 @@ export class DietController {
 
   @Get('recipe')
   @ApiOperation({ summary: '获取食谱列表' })
-  @ApiQuery({ name: 'suitableFor', required: false, description: '适合人群：hypertension/diabetes' })
+  @ApiQuery({
+    name: 'suitableFor',
+    required: false,
+    description: '适合人群：hypertension/diabetes',
+  })
   @ApiQuery({ name: 'limit', required: false, description: '返回数量' })
   async getRecipes(
     @Query('suitableFor') suitableFor?: string,
@@ -36,14 +48,21 @@ export class DietController {
   ) {
     return {
       code: 0,
-      data: await this.dietService.getRecipes(suitableFor, limit ? parseInt(limit) : 50),
+      data: await this.dietService.getRecipes(
+        suitableFor,
+        limit ? parseInt(limit) : 50,
+      ),
       message: 'ok',
     };
   }
 
   @Get('recipe/recommended')
   @ApiOperation({ summary: '获取智能推荐食谱（根据病种+人数）' })
-  @ApiQuery({ name: 'diseases', required: false, description: '病种，逗号分隔：hypertension,diabetes' })
+  @ApiQuery({
+    name: 'diseases',
+    required: false,
+    description: '病种，逗号分隔：hypertension,diabetes',
+  })
   @ApiQuery({ name: 'people', required: false, description: '用餐人数' })
   async getRecommendedRecipes(
     @Query('diseases') diseases?: string,
@@ -53,7 +72,10 @@ export class DietController {
     const peopleCount = people ? parseInt(people) : 2;
     return {
       code: 0,
-      data: await this.recommendationService.getRecommendedRecipes(diseaseList, peopleCount),
+      data: await this.recommendationService.getRecommendedRecipes(
+        diseaseList,
+        peopleCount,
+      ),
       message: 'ok',
     };
   }
@@ -192,7 +214,10 @@ export class DietController {
   @ApiOperation({ summary: '保存买菜清单' })
   async saveShoppingList(
     @CurrentUser() user: UserPayload,
-    @Body() body: { items: Array<{ ingredient: string; amount: string; unit: string }> },
+    @Body()
+    body: {
+      items: Array<{ ingredient: string; amount: string; unit: string }>;
+    },
   ) {
     return {
       code: 0,
@@ -211,7 +236,11 @@ export class DietController {
   ) {
     return {
       code: 0,
-      data: await this.dietService.checkShoppingItem(listId, parseInt(itemIndex), user.id),
+      data: await this.dietService.checkShoppingItem(
+        listId,
+        parseInt(itemIndex),
+        user.id,
+      ),
       message: '已勾选',
     };
   }

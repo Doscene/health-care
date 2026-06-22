@@ -99,13 +99,15 @@ export class SeedService implements OnModuleInit {
         drugA: '硝苯地平',
         drugB: '西柚汁',
         severity: 'high',
-        description: '西柚汁可抑制硝苯地平代谢，导致血药浓度升高，增加低血压和心悸风险',
+        description:
+          '西柚汁可抑制硝苯地平代谢，导致血药浓度升高，增加低血压和心悸风险',
       },
       {
         drugA: '阿司匹林',
         drugB: '布洛芬',
         severity: 'high',
-        description: '两者联用增加胃肠道出血风险，且布洛芬可能降低阿司匹林的心血管保护作用',
+        description:
+          '两者联用增加胃肠道出血风险，且布洛芬可能降低阿司匹林的心血管保护作用',
       },
       {
         drugA: '卡托普利',
@@ -117,7 +119,8 @@ export class SeedService implements OnModuleInit {
         drugA: '二甲双胍',
         drugB: '含碘造影剂',
         severity: 'high',
-        description: '二甲双胍与含碘造影剂联用可能增加乳酸性酸中毒风险，检查前后应暂停用药',
+        description:
+          '二甲双胍与含碘造影剂联用可能增加乳酸性酸中毒风险，检查前后应暂停用药',
       },
       {
         drugA: '华法林',
@@ -153,7 +156,8 @@ export class SeedService implements OnModuleInit {
         drugA: '普萘洛尔',
         drugB: '胰岛素',
         severity: 'medium',
-        description: 'β受体阻滞剂可能掩盖低血糖症状（如心悸、震颤），延迟低血糖识别',
+        description:
+          'β受体阻滞剂可能掩盖低血糖症状（如心悸、震颤），延迟低血糖识别',
       },
     ];
 

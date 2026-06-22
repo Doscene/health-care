@@ -2,8 +2,13 @@ package com.healthcare.family.ui.family
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.healthcare.family.data.remote.api.ChemistryDto
+import com.healthcare.family.data.remote.api.FamilyChallengeDto
 import com.healthcare.family.data.remote.api.FamilyDto
+import com.healthcare.family.data.remote.api.FamilyGoalDto
+import com.healthcare.family.data.remote.api.FamilyReminderDto
 import com.healthcare.family.data.remote.api.MemberDto
+import com.healthcare.family.data.remote.api.MemberHealthSummaryDto
 import com.healthcare.family.data.repository.FamilyRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,6 +22,11 @@ data class FamilyUiState(
     val families: List<FamilyDto> = emptyList(),
     val selectedFamilyId: String? = null,
     val members: List<MemberDto> = emptyList(),
+    val memberSummaries: List<MemberHealthSummaryDto> = emptyList(),
+    val chemistry: ChemistryDto? = null,
+    val goals: List<FamilyGoalDto> = emptyList(),
+    val challenges: List<FamilyChallengeDto> = emptyList(),
+    val reminders: List<FamilyReminderDto> = emptyList(),
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
     val createSuccess: Boolean = false,
@@ -96,10 +106,44 @@ class FamilyViewModel @Inject constructor(
             familyRepository.getMembers(familyId).fold(
                 onSuccess = { members ->
                     _uiState.update { it.copy(members = members, isLoading = false) }
+                    loadPhase3Data(familyId)
                 },
                 onFailure = { e ->
                     _uiState.update { it.copy(isLoading = false, errorMessage = e.message) }
                 },
+            )
+        }
+    }
+
+    private fun loadPhase3Data(familyId: String) {
+        viewModelScope.launch {
+            familyRepository.getFamilySummary(familyId).fold(
+                onSuccess = { summaries -> _uiState.update { it.copy(memberSummaries = summaries) } },
+                onFailure = { },
+            )
+        }
+        viewModelScope.launch {
+            familyRepository.getChemistry(familyId).fold(
+                onSuccess = { chemistry -> _uiState.update { it.copy(chemistry = chemistry) } },
+                onFailure = { },
+            )
+        }
+        viewModelScope.launch {
+            familyRepository.getGoals(familyId).fold(
+                onSuccess = { goals -> _uiState.update { it.copy(goals = goals) } },
+                onFailure = { },
+            )
+        }
+        viewModelScope.launch {
+            familyRepository.getChallenges(familyId).fold(
+                onSuccess = { challenges -> _uiState.update { it.copy(challenges = challenges) } },
+                onFailure = { },
+            )
+        }
+        viewModelScope.launch {
+            familyRepository.getReminders(familyId).fold(
+                onSuccess = { reminders -> _uiState.update { it.copy(reminders = reminders) } },
+                onFailure = { },
             )
         }
     }

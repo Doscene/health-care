@@ -136,7 +136,7 @@ export class FamilyChallengeService {
         type: dto.type,
         title: dto.title ?? template?.title ?? '家庭挑战',
         description: dto.description ?? template?.description ?? null,
-        ruleConfig: (dto.ruleConfig ?? template?.ruleConfig ?? {}) as object,
+        ruleConfig: dto.ruleConfig ?? template?.ruleConfig ?? {},
         participantIds: dto.participantIds,
         startDate: start,
         endDate: end,

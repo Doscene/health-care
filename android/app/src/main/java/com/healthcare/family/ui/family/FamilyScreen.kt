@@ -5,6 +5,7 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,14 +23,20 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.Flag
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.PersonAdd
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -43,6 +50,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.healthcare.family.data.remote.api.FamilyChallengeDto
+import com.healthcare.family.data.remote.api.FamilyGoalDto
+import com.healthcare.family.data.remote.api.FamilyReminderDto
 import com.healthcare.family.data.remote.api.MemberDto
 
 /**
@@ -139,7 +149,13 @@ fun FamilyScreen(
         // 家庭成员
         if (uiState.members.isNotEmpty()) {
             items(uiState.members) { member ->
-                MemberCard(member = member)
+                MemberCard(
+                    member = member,
+                    onClick = {
+                        val familyId = uiState.selectedFamilyId ?: return@MemberCard
+                        onNavigate("family/$familyId/member/${member.userId}")
+                    },
+                )
             }
         } else if (!uiState.isLoading && currentFamily != null) {
             item {
@@ -148,6 +164,57 @@ fun FamilyScreen(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+            }
+        }
+
+        // Phase 3: 化学力/默契值
+        uiState.chemistry?.let { chemistry ->
+            if (chemistry.score > 0) {
+                item {
+                    ChemistryCard(chemistry = chemistry)
+                }
+            }
+        }
+
+        // Phase 3: 家庭目标
+        if (uiState.goals.isNotEmpty()) {
+            item {
+                Text(text = "家庭目标", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            }
+            items(uiState.goals.take(3)) { goal ->
+                GoalCard(goal = goal)
+            }
+        }
+
+        // Phase 3: 家庭挑战
+        if (uiState.challenges.isNotEmpty()) {
+            item {
+                Text(text = "进行中的挑战", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            }
+            items(uiState.challenges.take(3)) { challenge ->
+                ChallengeCard(challenge = challenge)
+            }
+        }
+
+        // Phase 3: 互相提醒
+        if (uiState.reminders.isNotEmpty()) {
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(text = "最新提醒", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    Text(
+                        text = "查看全部",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.clickable { onNavigate("family/reminders") },
+                    )
+                }
+            }
+            items(uiState.reminders.take(3)) { reminder ->
+                ReminderCard(reminder = reminder)
             }
         }
 
@@ -249,9 +316,11 @@ private fun InviteCodeCard(inviteCode: String, onCopy: () -> Unit) {
 }
 
 @Composable
-private fun MemberCard(member: MemberDto) {
+private fun MemberCard(member: MemberDto, onClick: () -> Unit = {}) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
         shape = RoundedCornerShape(12.dp),
     ) {
         Row(
@@ -309,4 +378,161 @@ private fun copyToClipboard(context: Context, text: String) {
     val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
     val clip = ClipData.newPlainText("邀请码", text)
     clipboard.setPrimaryClip(clip)
+}
+
+@Composable
+private fun ChemistryCard(chemistry: com.healthcare.family.data.remote.api.ChemistryDto) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+        ),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.TrendingUp,
+                contentDescription = null,
+                modifier = Modifier.size(36.dp),
+                tint = MaterialTheme.colorScheme.tertiary,
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(text = "家庭默契值", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(
+                    text = "完成 ${chemistry.completedReminders}/${chemistry.totalReminders} 次互相提醒",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Text(
+                text = "${chemistry.score}分",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.tertiary,
+            )
+        }
+    }
+}
+
+@Composable
+private fun GoalCard(goal: com.healthcare.family.data.remote.api.FamilyGoalDto) {
+    val progress = if (goal.targetValue > 0) {
+        (goal.currentValue.toFloat() / goal.targetValue).coerceIn(0f, 1f)
+    } else 0f
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Flag, contentDescription = null, modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(text = goal.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Medium)
+                }
+                Text(
+                    text = "${goal.currentValue}/${goal.targetValue} ${goal.unit}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            LinearProgressIndicator(
+                progress = { progress },
+                modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)),
+            )
+        }
+    }
+}
+
+@Composable
+private fun ChallengeCard(challenge: com.healthcare.family.data.remote.api.FamilyChallengeDto) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                imageVector = Icons.Default.EmojiEvents,
+                contentDescription = null,
+                modifier = Modifier.size(28.dp),
+                tint = MaterialTheme.colorScheme.primary,
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(text = challenge.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Medium)
+                Text(
+                    text = challenge.description.take(50),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Text(
+                    text = "${challenge.participants.size}人参与",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ReminderCard(reminder: com.healthcare.family.data.remote.api.FamilyReminderDto) {
+    val typeLabel = when (reminder.type) {
+        "medication" -> "用药提醒"
+        "exercise" -> "运动提醒"
+        "checkup" -> "复查提醒"
+        else -> reminder.type
+    }
+    val statusColor = when (reminder.status) {
+        "completed" -> MaterialTheme.colorScheme.primary
+        "pending" -> MaterialTheme.colorScheme.error
+        else -> MaterialTheme.colorScheme.outline
+    }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                imageVector = if (reminder.status == "completed") Icons.Default.CheckCircle else Icons.Default.Notifications,
+                contentDescription = null,
+                modifier = Modifier.size(24.dp),
+                tint = statusColor,
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(text = typeLabel, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+                reminder.message?.let {
+                    Text(text = it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+            Text(
+                text = reminder.createdAt.take(10),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.outline,
+            )
+        }
+    }
 }

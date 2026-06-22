@@ -48,7 +48,10 @@ export class OcrService {
    * 根据配置决定主厂商和备选厂商
    */
   private async initializeProviders() {
-    const primary = this.configService.get<string>('OCR_PRIMARY_PROVIDER', 'baidu');
+    const primary = this.configService.get<string>(
+      'OCR_PRIMARY_PROVIDER',
+      'baidu',
+    );
 
     // 按配置的主厂商排序
     if (primary === 'tencent') {
@@ -62,7 +65,9 @@ export class OcrService {
     // 检查各 Provider 可用性
     for (const provider of this.providers) {
       const available = await provider.isAvailable();
-      this.logger.log(`OCR Provider [${provider.name}] ${available ? '可用' : '不可用'}`);
+      this.logger.log(
+        `OCR Provider [${provider.name}] ${available ? '可用' : '不可用'}`,
+      );
     }
   }
 
@@ -158,7 +163,9 @@ export class OcrService {
     }
 
     // 所有 Provider 都失败
-    throw new BadRequestException(`OCR识别失败: 所有厂商都不可用。最后错误: ${lastError?.message}`);
+    throw new BadRequestException(
+      `OCR识别失败: 所有厂商都不可用。最后错误: ${lastError?.message}`,
+    );
   }
 
   /**
@@ -177,17 +184,27 @@ export class OcrService {
   getStats(): {
     totalCalls: number;
     successRate: number;
-    providerStats: Record<string, { calls: number; successRate: number; avgConfidence: number }>;
+    providerStats: Record<
+      string,
+      { calls: number; successRate: number; avgConfidence: number }
+    >;
   } {
     const totalCalls = this.callLogs.length;
     const successCalls = this.callLogs.filter((log) => log.success).length;
 
     // 按 Provider 统计
-    const providerStats: Record<string, { calls: number; success: number; confidenceSum: number }> = {};
+    const providerStats: Record<
+      string,
+      { calls: number; success: number; confidenceSum: number }
+    > = {};
 
     for (const log of this.callLogs) {
       if (!providerStats[log.provider]) {
-        providerStats[log.provider] = { calls: 0, success: 0, confidenceSum: 0 };
+        providerStats[log.provider] = {
+          calls: 0,
+          success: 0,
+          confidenceSum: 0,
+        };
       }
       providerStats[log.provider].calls++;
       if (log.success) {
@@ -196,12 +213,16 @@ export class OcrService {
       }
     }
 
-    const result: Record<string, { calls: number; successRate: number; avgConfidence: number }> = {};
+    const result: Record<
+      string,
+      { calls: number; successRate: number; avgConfidence: number }
+    > = {};
     for (const [provider, stats] of Object.entries(providerStats)) {
       result[provider] = {
         calls: stats.calls,
         successRate: stats.calls > 0 ? stats.success / stats.calls : 0,
-        avgConfidence: stats.success > 0 ? stats.confidenceSum / stats.success : 0,
+        avgConfidence:
+          stats.success > 0 ? stats.confidenceSum / stats.success : 0,
       };
     }
 

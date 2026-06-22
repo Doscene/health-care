@@ -1,4 +1,8 @@
-import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import {
   normalizeVisibility,
@@ -20,7 +24,11 @@ interface MemberSummary {
   status: StatusLabel;
   visibility: VisibilityConfig;
   metrics: {
-    bp: { avgSystolic: number | null; avgDiastolic: number | null; count: number } | null;
+    bp: {
+      avgSystolic: number | null;
+      avgDiastolic: number | null;
+      count: number;
+    } | null;
     bg: { avgValue: number | null; count: number } | null;
     medication: { adherenceRate: number | null; total: number } | null;
   };
@@ -153,7 +161,13 @@ export class FamilySummaryService {
       where: { familyId },
       include: {
         user: {
-          select: { id: true, name: true, avatar: true, selfRole: true, diseases: true },
+          select: {
+            id: true,
+            name: true,
+            avatar: true,
+            selfRole: true,
+            diseases: true,
+          },
         },
       },
     });
@@ -161,7 +175,9 @@ export class FamilySummaryService {
     const summaries: MemberSummary[] = await Promise.all(
       members.map(async (m) => {
         const isSelf = m.userId === viewerId;
-        const visibility = isSelf ? selfVisibility() : normalizeVisibility(m.visibility);
+        const visibility = isSelf
+          ? selfVisibility()
+          : normalizeVisibility(m.visibility);
 
         const [bp, bg, medication] = await Promise.all([
           this.last7DaysBp(m.userId),
@@ -210,7 +226,9 @@ export class FamilySummaryService {
     if (!target) throw new NotFoundException('该成员不属于该家庭');
 
     const isSelf = targetUserId === viewerId;
-    const visibility = isSelf ? selfVisibility() : normalizeVisibility(target.visibility);
+    const visibility = isSelf
+      ? selfVisibility()
+      : normalizeVisibility(target.visibility);
     const level = visibility[metric];
 
     if (level === 'none') {
@@ -229,7 +247,12 @@ export class FamilySummaryService {
       const records = await this.prisma.bloodPressureRecord.findMany({
         where: { userId: targetUserId, recordedAt: { gte: since } },
         orderBy: { recordedAt: 'asc' },
-        select: { systolic: true, diastolic: true, heartRate: true, recordedAt: true },
+        select: {
+          systolic: true,
+          diastolic: true,
+          heartRate: true,
+          recordedAt: true,
+        },
       });
       // summary 级别仅返回平均值和次数
       if (level === 'summary') {
@@ -260,7 +283,9 @@ export class FamilySummaryService {
       const records = await this.prisma.medicationRecord.findMany({
         where: { userId: targetUserId, scheduledTime: { gte: since } },
         orderBy: { scheduledTime: 'desc' },
-        include: { medication: { select: { name: true, specification: true } } },
+        include: {
+          medication: { select: { name: true, specification: true } },
+        },
       });
       return { userId: targetUserId, metric, level, data: records };
     }

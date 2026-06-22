@@ -154,7 +154,8 @@ export class FamilyGoalService {
     }
     if (dto.endDate !== undefined) {
       const end = new Date(dto.endDate);
-      if (Number.isNaN(end.getTime())) throw new BadRequestException('日期无效');
+      if (Number.isNaN(end.getTime()))
+        throw new BadRequestException('日期无效');
       data.endDate = end;
     }
     if (dto.currentValue !== undefined && existing.type === 'custom') {

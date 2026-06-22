@@ -12,7 +12,10 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AlertService } from './alert.service.js';
-import { CurrentUser, type UserPayload } from '../../common/decorators/current-user.decorator.js';
+import {
+  CurrentUser,
+  type UserPayload,
+} from '../../common/decorators/current-user.decorator.js';
 
 @ApiTags('风险预警')
 @ApiBearerAuth()
@@ -45,7 +48,11 @@ export class AlertController {
   ) {
     return {
       code: 0,
-      data: await this.alertService.updateAlertStatus(user.id, alertId, body.status),
+      data: await this.alertService.updateAlertStatus(
+        user.id,
+        alertId,
+        body.status,
+      ),
       message: '状态已更新',
     };
   }
@@ -60,7 +67,11 @@ export class AlertController {
   ) {
     return {
       code: 0,
-      data: await this.alertService.submitInquiry(user.id, alertId, body.answer),
+      data: await this.alertService.submitInquiry(
+        user.id,
+        alertId,
+        body.answer,
+      ),
       message: '回答已提交',
     };
   }
@@ -72,7 +83,8 @@ export class AlertController {
   @ApiOperation({ summary: '添加紧急联系人' })
   async addEmergencyContact(
     @CurrentUser() user: UserPayload,
-    @Body() body: { name: string; phone: string; relation: string; priority?: number },
+    @Body()
+    body: { name: string; phone: string; relation: string; priority?: number },
   ) {
     return {
       code: 0,
@@ -97,11 +109,21 @@ export class AlertController {
   async updateEmergencyContact(
     @CurrentUser() user: UserPayload,
     @Param('contactId') contactId: string,
-    @Body() body: { name?: string; phone?: string; relation?: string; priority?: number },
+    @Body()
+    body: {
+      name?: string;
+      phone?: string;
+      relation?: string;
+      priority?: number;
+    },
   ) {
     return {
       code: 0,
-      data: await this.alertService.updateEmergencyContact(user.id, contactId, body),
+      data: await this.alertService.updateEmergencyContact(
+        user.id,
+        contactId,
+        body,
+      ),
       message: '更新成功',
     };
   }
@@ -129,7 +151,10 @@ export class AlertController {
   ) {
     return {
       code: 0,
-      data: await this.alertService.setMutualContact(user.id, body.targetUserId),
+      data: await this.alertService.setMutualContact(
+        user.id,
+        body.targetUserId,
+      ),
       message: '已设置',
     };
   }

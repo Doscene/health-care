@@ -35,7 +35,8 @@ export function normalizeVisibility(raw: unknown): VisibilityConfig {
   const r = raw as Record<string, unknown>;
   const pick = (key: VisibilityMetric): VisibilityLevel => {
     const value = r[key];
-    if (value === 'all' || value === 'summary' || value === 'none') return value;
+    if (value === 'all' || value === 'summary' || value === 'none')
+      return value;
     return DEFAULT_VISIBILITY[key];
   };
   return {

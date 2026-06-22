@@ -1,6 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { AsrProvider, AsrResult } from '../interfaces/asr-provider.interface.js';
+import {
+  AsrProvider,
+  AsrResult,
+} from '../interfaces/asr-provider.interface.js';
 
 /**
  * 百度语音识别 Provider
@@ -61,7 +64,10 @@ export class BaiduAsrProvider implements AsrProvider {
    * 识别语音
    * 使用短语音识别标准版API
    */
-  async recognize(audioBase64: string, format: string = 'pcm'): Promise<AsrResult> {
+  async recognize(
+    audioBase64: string,
+    format: string = 'pcm',
+  ): Promise<AsrResult> {
     const token = await this.getAccessToken();
 
     // 根据格式确定参数

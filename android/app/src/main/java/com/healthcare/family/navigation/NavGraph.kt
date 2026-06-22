@@ -9,12 +9,18 @@ import com.healthcare.family.ui.auth.LoginScreen
 import com.healthcare.family.ui.camera.CameraMode
 import com.healthcare.family.ui.camera.CameraScreen
 import com.healthcare.family.ui.contacts.EmergencyContactScreen
+import com.healthcare.family.ui.diet.DietRecordScreen
 import com.healthcare.family.ui.diet.MenuScreen
 import com.healthcare.family.ui.diet.RecipeDetailScreen
+import com.healthcare.family.ui.diet.ShoppingListScreen
 import com.healthcare.family.ui.diet.SubstitutionScreen
 import com.healthcare.family.ui.family.CreateFamilyScreen
+import com.healthcare.family.ui.family.FamilyChallengeScreen
+import com.healthcare.family.ui.family.FamilyGoalScreen
+import com.healthcare.family.ui.family.FamilyReminderScreen
 import com.healthcare.family.ui.family.InviteMemberScreen
 import com.healthcare.family.ui.family.JoinFamilyScreen
+import com.healthcare.family.ui.family.MemberDetailScreen
 import com.healthcare.family.ui.kit.FirstAidKitScreen
 import com.healthcare.family.ui.medication.AddMedicationScreen
 import com.healthcare.family.ui.medication.MedicationCalendarScreen
@@ -183,6 +189,46 @@ fun AppNavGraph(
             val recipeId = backStackEntry.arguments?.getString("id") ?: ""
             RecipeDetailScreen(
                 recipeId = recipeId,
+                onBack = { navController.popBackStack() },
+            )
+        }
+
+        // Phase 3: 饮食扩展
+        composable("diet/record") {
+            DietRecordScreen(
+                onBack = { navController.popBackStack() },
+                onRecorded = { navController.popBackStack() },
+            )
+        }
+        composable("diet/shopping") {
+            ShoppingListScreen(onBack = { navController.popBackStack() })
+        }
+
+        // Phase 3: 家庭协作
+        composable("family/{familyId}/member/{memberId}") { backStackEntry ->
+            val familyId = backStackEntry.arguments?.getString("familyId") ?: ""
+            val memberId = backStackEntry.arguments?.getString("memberId") ?: ""
+            MemberDetailScreen(
+                familyId = familyId,
+                memberId = memberId,
+                onBack = { navController.popBackStack() },
+            )
+        }
+        composable("family/goals") {
+            FamilyGoalScreen(
+                familyId = "",
+                onBack = { navController.popBackStack() },
+            )
+        }
+        composable("family/challenges") {
+            FamilyChallengeScreen(
+                familyId = "",
+                onBack = { navController.popBackStack() },
+            )
+        }
+        composable("family/reminders") {
+            FamilyReminderScreen(
+                familyId = "",
                 onBack = { navController.popBackStack() },
             )
         }

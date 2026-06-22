@@ -35,7 +35,9 @@ export class SpeechService {
     // 检查各 Provider 可用性
     for (const provider of this.providers) {
       const available = await provider.isAvailable();
-      this.logger.log(`ASR Provider [${provider.name}] ${available ? '可用' : '不可用'}`);
+      this.logger.log(
+        `ASR Provider [${provider.name}] ${available ? '可用' : '不可用'}`,
+      );
     }
   }
 
@@ -43,7 +45,10 @@ export class SpeechService {
    * 识别语音
    * 自动选择可用的 Provider
    */
-  async recognize(audioBase64: string, format: string = 'pcm'): Promise<AsrResult> {
+  async recognize(
+    audioBase64: string,
+    format: string = 'pcm',
+  ): Promise<AsrResult> {
     if (!audioBase64 || audioBase64.length === 0) {
       throw new BadRequestException('音频数据不能为空');
     }
@@ -71,7 +76,9 @@ export class SpeechService {
     }
 
     // 所有 Provider 都失败
-    throw new BadRequestException(`语音识别失败: 所有厂商都不可用。最后错误: ${lastError?.message}`);
+    throw new BadRequestException(
+      `语音识别失败: 所有厂商都不可用。最后错误: ${lastError?.message}`,
+    );
   }
 
   /**

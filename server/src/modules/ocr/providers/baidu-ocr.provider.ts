@@ -1,6 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { OcrProvider, OcrResult, OcrLine } from '../interfaces/ocr-provider.interface.js';
+import {
+  OcrProvider,
+  OcrResult,
+  OcrLine,
+} from '../interfaces/ocr-provider.interface.js';
 
 /**
  * 百度OCR Provider

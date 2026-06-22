@@ -21,7 +21,13 @@ export interface BloodPressureData {
 
 /** 血糖数据 */
 export interface BloodSugarData {
-  type: 'fasting' | 'before_meal' | 'after_meal' | 'after_meal_2h' | 'random' | 'bedtime';
+  type:
+    | 'fasting'
+    | 'before_meal'
+    | 'after_meal'
+    | 'after_meal_2h'
+    | 'random'
+    | 'bedtime';
   value: number;
 }
 
@@ -107,7 +113,8 @@ export class VoiceParserService {
    */
   private parseBloodPressure(text: string): BloodPressureData | null {
     // 模式1: 血压/收缩压/高压 + 数字 + 舒张压/低压 + 数字
-    const pattern1 = /(?:血压|收缩压|高压)\s*(\d{2,3})\s*(?:舒张压|低压)?\s*(\d{2,3})/i;
+    const pattern1 =
+      /(?:血压|收缩压|高压)\s*(\d{2,3})\s*(?:舒张压|低压)?\s*(\d{2,3})/i;
     const match1 = text.match(pattern1);
     if (match1) {
       const systolic = parseInt(match1[1]);
@@ -186,18 +193,21 @@ export class VoiceParserService {
   private parseBloodSugar(text: string): BloodSugarData | null {
     // 血糖类型映射
     const typeMap: Record<string, BloodSugarData['type']> = {
-      '空腹': 'fasting',
-      '餐前': 'before_meal',
-      '餐后两小时': 'after_meal_2h',
-      '餐后2小时': 'after_meal_2h',
-      '餐后': 'after_meal',
-      '随机': 'random',
-      '睡前': 'bedtime',
+      空腹: 'fasting',
+      餐前: 'before_meal',
+      餐后两小时: 'after_meal_2h',
+      餐后2小时: 'after_meal_2h',
+      餐后: 'after_meal',
+      随机: 'random',
+      睡前: 'bedtime',
     };
 
     // 模式1: 类型 + 血糖 + 数字
     for (const [keyword, type] of Object.entries(typeMap)) {
-      const pattern = new RegExp(`${keyword}\\s*(?:血糖)?\\s*(\\d+\\.?\\d*)`, 'i');
+      const pattern = new RegExp(
+        `${keyword}\\s*(?:血糖)?\\s*(\\d+\\.?\\d*)`,
+        'i',
+      );
       const match = text.match(pattern);
       if (match) {
         const value = parseFloat(match[1]);

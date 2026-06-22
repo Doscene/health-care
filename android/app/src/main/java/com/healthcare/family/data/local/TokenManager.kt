@@ -31,6 +31,8 @@ class TokenManager @Inject constructor(
     val userId: Flow<String?> = dataStore.data.map { it[KEY_USER_ID] }
     val userRole: Flow<String?> = dataStore.data.map { it[KEY_USER_ROLE] }
     val isElderlyMode: Flow<Boolean> = dataStore.data.map { it[KEY_ELDERLY_MODE] ?: false }
+    val pushMedicationReminder: Flow<Boolean> = dataStore.data.map { it[KEY_PUSH_MED_REMINDER] ?: true }
+    val pushRiskAlert: Flow<Boolean> = dataStore.data.map { it[KEY_PUSH_RISK_ALERT] ?: true }
 
     val isLoggedIn: Flow<Boolean> = dataStore.data.map {
         !it[KEY_ACCESS_TOKEN].isNullOrEmpty()
@@ -55,6 +57,14 @@ class TokenManager @Inject constructor(
         dataStore.edit { it[KEY_ELDERLY_MODE] = enabled }
     }
 
+    suspend fun setPushMedicationReminder(enabled: Boolean) {
+        dataStore.edit { it[KEY_PUSH_MED_REMINDER] = enabled }
+    }
+
+    suspend fun setPushRiskAlert(enabled: Boolean) {
+        dataStore.edit { it[KEY_PUSH_RISK_ALERT] = enabled }
+    }
+
     suspend fun getAccessTokenSync(): String? {
         return dataStore.data.first()[KEY_ACCESS_TOKEN]
     }
@@ -73,5 +83,7 @@ class TokenManager @Inject constructor(
         private val KEY_USER_ID = stringPreferencesKey("user_id")
         private val KEY_USER_ROLE = stringPreferencesKey("user_role")
         private val KEY_ELDERLY_MODE = booleanPreferencesKey("elderly_mode")
+        private val KEY_PUSH_MED_REMINDER = booleanPreferencesKey("push_med_reminder")
+        private val KEY_PUSH_RISK_ALERT = booleanPreferencesKey("push_risk_alert")
     }
 }

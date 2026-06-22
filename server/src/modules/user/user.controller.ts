@@ -1,7 +1,17 @@
-import { Controller, Get, Put, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Put,
+  Body,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { UserService } from './user.service.js';
-import { CurrentUser, type UserPayload } from '../../common/decorators/current-user.decorator.js';
+import {
+  CurrentUser,
+  type UserPayload,
+} from '../../common/decorators/current-user.decorator.js';
 
 @ApiTags('用户')
 @ApiBearerAuth()
@@ -28,7 +38,11 @@ export class UserController {
   ) {
     return {
       code: 0,
-      data: await this.userService.updateRole(user.id, body.selfRole, body.diseases),
+      data: await this.userService.updateRole(
+        user.id,
+        body.selfRole,
+        body.diseases,
+      ),
       message: '角色更新成功',
     };
   }

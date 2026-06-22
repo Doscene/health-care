@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -70,9 +74,12 @@ export class DietService {
 
     // 获取关联的食谱
     const recipeIds = menus.map((m) => m.recipeId).filter(Boolean);
-    const recipes = recipeIds.length > 0
-      ? await this.prisma.recipe.findMany({ where: { id: { in: recipeIds } } })
-      : [];
+    const recipes =
+      recipeIds.length > 0
+        ? await this.prisma.recipe.findMany({
+            where: { id: { in: recipeIds } },
+          })
+        : [];
 
     return {
       date: today,
@@ -150,7 +157,11 @@ export class DietService {
     });
 
     // 收集所有替换建议
-    const tips: Array<{ original: string; substitute: string; reason: string }> = [];
+    const tips: Array<{
+      original: string;
+      substitute: string;
+      reason: string;
+    }> = [];
     for (const recipe of recipes) {
       const tipsData = recipe.substitutionTips as any[];
       if (Array.isArray(tipsData)) {
@@ -168,17 +179,40 @@ export class DietService {
 
     // 如果没有预设数据，返回常见替换建议
     if (tips.length === 0) {
-      const commonSubstitutions: Record<string, Array<{ original: string; substitute: string; reason: string }>> = {
+      const commonSubstitutions: Record<
+        string,
+        Array<{ original: string; substitute: string; reason: string }>
+      > = {
         盐: [
-          { original: '食盐', substitute: '低钠盐', reason: '减少钠摄入，适合高血压患者' },
-          { original: '酱油', substitute: '薄盐酱油', reason: '钠含量降低约30%' },
+          {
+            original: '食盐',
+            substitute: '低钠盐',
+            reason: '减少钠摄入，适合高血压患者',
+          },
+          {
+            original: '酱油',
+            substitute: '薄盐酱油',
+            reason: '钠含量降低约30%',
+          },
         ],
         糖: [
-          { original: '白砂糖', substitute: '木糖醇', reason: '不升血糖，适合糖尿病患者' },
-          { original: '蜂蜜', substitute: '罗汉果糖', reason: '天然甜味，零热量' },
+          {
+            original: '白砂糖',
+            substitute: '木糖醇',
+            reason: '不升血糖，适合糖尿病患者',
+          },
+          {
+            original: '蜂蜜',
+            substitute: '罗汉果糖',
+            reason: '天然甜味，零热量',
+          },
         ],
         油: [
-          { original: '猪油', substitute: '橄榄油', reason: '富含不饱和脂肪酸' },
+          {
+            original: '猪油',
+            substitute: '橄榄油',
+            reason: '富含不饱和脂肪酸',
+          },
           { original: '花生油', substitute: '亚麻籽油', reason: '富含Omega-3' },
         ],
       };
@@ -214,7 +248,10 @@ export class DietService {
   }
 
   /** 获取饮食记录（支持按日期过滤） */
-  async getDietRecords(userId: string, options: { limit?: number; date?: string } = {}) {
+  async getDietRecords(
+    userId: string,
+    options: { limit?: number; date?: string } = {},
+  ) {
     const { limit = 20, date } = options;
 
     const where: { userId: string; recordedAt?: { gte: Date; lt: Date } } = {

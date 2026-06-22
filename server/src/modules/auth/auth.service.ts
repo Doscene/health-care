@@ -96,7 +96,10 @@ export class AuthService {
     return { ...tokens, userId: user.id };
   }
 
-  private generateTokens(userId: string, phone: string): Omit<TokenResponseDto, 'userId'> {
+  private generateTokens(
+    userId: string,
+    phone: string,
+  ): Omit<TokenResponseDto, 'userId'> {
     const payload = { sub: userId, phone };
 
     const accessExpiresIn: JwtSignOptions['expiresIn'] = this.configService.get(

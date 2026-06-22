@@ -1,4 +1,8 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { AlertService } from '../alert/alert.service.js';
 
@@ -52,7 +56,10 @@ export class HealthMetricsService {
     if (dto.diastolic < 30 || dto.diastolic > 200) {
       throw new BadRequestException('舒张压数值异常（正常范围30-200）');
     }
-    if (dto.heartRate !== undefined && (dto.heartRate < 30 || dto.heartRate > 250)) {
+    if (
+      dto.heartRate !== undefined &&
+      (dto.heartRate < 30 || dto.heartRate > 250)
+    ) {
       throw new BadRequestException('心率数值异常（正常范围30-250）');
     }
 
@@ -123,7 +130,11 @@ export class HealthMetricsService {
   }
 
   /** 更新血压记录 */
-  async updateBpRecord(userId: string, recordId: string, dto: Partial<CreateBpRecordDto>) {
+  async updateBpRecord(
+    userId: string,
+    recordId: string,
+    dto: Partial<CreateBpRecordDto>,
+  ) {
     const existing = await this.prisma.bloodPressureRecord.findFirst({
       where: { id: recordId, userId },
     });
@@ -175,9 +186,17 @@ export class HealthMetricsService {
   /** 创建血糖记录 */
   async createBgRecord(userId: string, dto: CreateBgRecordDto) {
     // 校验血糖类型
-    const validTypes = ['fasting', 'before_meal', 'after_meal', 'random', 'bedtime'];
+    const validTypes = [
+      'fasting',
+      'before_meal',
+      'after_meal',
+      'random',
+      'bedtime',
+    ];
     if (!validTypes.includes(dto.type)) {
-      throw new BadRequestException(`血糖类型无效，可选值：${validTypes.join(', ')}`);
+      throw new BadRequestException(
+        `血糖类型无效，可选值：${validTypes.join(', ')}`,
+      );
     }
 
     // 校验血糖值
@@ -207,7 +226,10 @@ export class HealthMetricsService {
   }
 
   /** 查询血糖记录列表 */
-  async getBgRecords(userId: string, query: RecordQueryDto & { type?: string }) {
+  async getBgRecords(
+    userId: string,
+    query: RecordQueryDto & { type?: string },
+  ) {
     const { startDate, endDate, type, page = 1, pageSize = 20 } = query;
 
     const where: any = { userId };
@@ -255,7 +277,11 @@ export class HealthMetricsService {
   }
 
   /** 更新血糖记录 */
-  async updateBgRecord(userId: string, recordId: string, dto: Partial<CreateBgRecordDto>) {
+  async updateBgRecord(
+    userId: string,
+    recordId: string,
+    dto: Partial<CreateBgRecordDto>,
+  ) {
     const existing = await this.prisma.bloodSugarRecord.findFirst({
       where: { id: recordId, userId },
     });
@@ -266,9 +292,17 @@ export class HealthMetricsService {
 
     // 校验类型
     if (dto.type) {
-      const validTypes = ['fasting', 'before_meal', 'after_meal', 'random', 'bedtime'];
+      const validTypes = [
+        'fasting',
+        'before_meal',
+        'after_meal',
+        'random',
+        'bedtime',
+      ];
       if (!validTypes.includes(dto.type)) {
-        throw new BadRequestException(`血糖类型无效，可选值：${validTypes.join(', ')}`);
+        throw new BadRequestException(
+          `血糖类型无效，可选值：${validTypes.join(', ')}`,
+        );
       }
     }
 
@@ -390,11 +424,17 @@ export class HealthMetricsService {
     // 计算每日平均值
     const trend = Object.entries(grouped).map(([date, dayRecords]) => ({
       date,
-      avgSystolic: Math.round(dayRecords.reduce((sum, r) => sum + r.systolic, 0) / dayRecords.length),
-      avgDiastolic: Math.round(dayRecords.reduce((sum, r) => sum + r.diastolic, 0) / dayRecords.length),
+      avgSystolic: Math.round(
+        dayRecords.reduce((sum, r) => sum + r.systolic, 0) / dayRecords.length,
+      ),
+      avgDiastolic: Math.round(
+        dayRecords.reduce((sum, r) => sum + r.diastolic, 0) / dayRecords.length,
+      ),
       avgHeartRate: dayRecords[0].heartRate
         ? Math.round(
-            dayRecords.filter((r) => r.heartRate).reduce((sum, r) => sum + (r.heartRate || 0), 0) /
+            dayRecords
+              .filter((r) => r.heartRate)
+              .reduce((sum, r) => sum + (r.heartRate || 0), 0) /
               dayRecords.filter((r) => r.heartRate).length,
           )
         : null,
@@ -435,7 +475,10 @@ export class HealthMetricsService {
     const trend = Object.entries(grouped).map(([date, dayRecords]) => ({
       date,
       avgValue: parseFloat(
-        (dayRecords.reduce((sum, r) => sum + Number(r.value), 0) / dayRecords.length).toFixed(1),
+        (
+          dayRecords.reduce((sum, r) => sum + Number(r.value), 0) /
+          dayRecords.length
+        ).toFixed(1),
       ),
       count: dayRecords.length,
       byType: this.groupBgByType(dayRecords),
@@ -454,7 +497,9 @@ export class HealthMetricsService {
 
     return Object.entries(grouped).map(([type, values]) => ({
       type,
-      avgValue: parseFloat((values.reduce((a, b) => a + b, 0) / values.length).toFixed(1)),
+      avgValue: parseFloat(
+        (values.reduce((a, b) => a + b, 0) / values.length).toFixed(1),
+      ),
       count: values.length,
     }));
   }

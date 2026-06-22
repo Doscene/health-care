@@ -46,7 +46,12 @@ export class RiskEngine {
     /** 绿色：收缩压 < 140 且 舒张压 < 90 */
     green: { systolicMax: 139, diastolicMax: 89 },
     /** 黄色：收缩压 140-159 或 舒张压 90-99 */
-    yellow: { systolicMin: 140, systolicMax: 159, diastolicMin: 90, diastolicMax: 99 },
+    yellow: {
+      systolicMin: 140,
+      systolicMax: 159,
+      diastolicMin: 90,
+      diastolicMax: 99,
+    },
     /** 橙色：连续3天 收缩压 > 150 */
     orange: { systolicPersistent: 150 },
     /** 红色：收缩压 ≥ 180 或 舒张压 ≥ 110 */
@@ -58,7 +63,12 @@ export class RiskEngine {
     /** 绿色：空腹 3.9-7.0，餐后 < 10.0 */
     green: { fastingMin: 3.9, fastingMax: 7.0, postMealMax: 10.0 },
     /** 黄色：空腹 7.0-8.0 或 餐后 10.0-13.0 */
-    yellow: { fastingMin: 7.0, fastingMax: 8.0, postMealMin: 10.0, postMealMax: 13.0 },
+    yellow: {
+      fastingMin: 7.0,
+      fastingMax: 8.0,
+      postMealMin: 10.0,
+      postMealMax: 13.0,
+    },
     /** 橙色：连续3天 空腹 > 8.0 */
     orange: { fastingPersistent: 8.0 },
     /** 红色：空腹 ≥ 13.9 或 ≤ 2.8 */
@@ -109,8 +119,7 @@ export class RiskEngine {
 
   /** 评估血糖风险 */
   evaluateBgRisk(bg: BgInput): RiskResult {
-    const isFasting =
-      bg.type === 'fasting' || bg.type === 'before_meal';
+    const isFasting = bg.type === 'fasting' || bg.type === 'before_meal';
 
     // 红色：空腹 ≥ 13.9 或 ≤ 2.8；任何低血糖症状
     if (
@@ -307,10 +316,22 @@ export class RiskEngine {
 
     if (triggerType === 'bp_high' || triggerType === 'bp_critical') {
       question = '血压最近波动有点大 📈\n最近血压偏高，可能和什么有关？';
-      options = ['睡眠不好', '吃咸了', '忘记吃药', '最近压力大', '不知道 / 其他'];
+      options = [
+        '睡眠不好',
+        '吃咸了',
+        '忘记吃药',
+        '最近压力大',
+        '不知道 / 其他',
+      ];
     } else if (triggerType === 'bg_high' || triggerType === 'bg_critical') {
       question = '血糖最近有点高 📈\n最近血糖偏高，可能和什么有关？';
-      options = ['饮食问题', '忘记吃药', '缺少运动', '最近压力大', '不知道 / 其他'];
+      options = [
+        '饮食问题',
+        '忘记吃药',
+        '缺少运动',
+        '最近压力大',
+        '不知道 / 其他',
+      ];
     } else if (triggerType === 'bg_low') {
       question = '血糖偏低！请确认身体状况';
       options = ['已进食糖分', '感觉还好', '头晕不适', '需要帮助'];

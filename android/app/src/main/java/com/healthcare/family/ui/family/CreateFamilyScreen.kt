@@ -35,8 +35,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.content.Intent
+import android.widget.Toast
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -53,6 +59,7 @@ fun CreateFamilyScreen(
     viewModel: FamilyViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
     var familyName by remember { mutableStateOf("") }
     var createdInviteCode by remember { mutableStateOf("") }
 
@@ -159,12 +166,24 @@ fun CreateFamilyScreen(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    OutlinedButton(onClick = { /* TODO: 复制邀请码 */ }, modifier = Modifier.weight(1f)) {
+                    OutlinedButton(onClick = {
+                        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                        val clip = ClipData.newPlainText("邀请码", createdInviteCode)
+                        clipboard.setPrimaryClip(clip)
+                        Toast.makeText(context, "已复制邀请码", Toast.LENGTH_SHORT).show()
+                    }, modifier = Modifier.weight(1f)) {
                         Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(4.dp))
                         Text("复制")
                     }
-                    Button(onClick = { /* TODO: 分享 */ }, modifier = Modifier.weight(1f)) {
+                    Button(onClick = {
+                        val sendIntent = Intent().apply {
+                            action = Intent.ACTION_SEND
+                            putExtra(Intent.EXTRA_TEXT, "家庭健康管家邀请您加入家庭，邀请码：$createdInviteCode（48小时内有效）")
+                            type = "text/plain"
+                        }
+                        context.startActivity(Intent.createChooser(sendIntent, "分享邀请码"))
+                    }, modifier = Modifier.weight(1f)) {
                         Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(4.dp))
                         Text("分享给家人")

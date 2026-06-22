@@ -15,7 +15,11 @@ export class FamilyService {
   private readonly logger = new Logger(FamilyService.name);
 
   /** 允许加入家庭时使用的角色白名单 */
-  private static readonly ALLOWED_JOIN_ROLES = ['member', 'caregiver', 'viewer'];
+  private static readonly ALLOWED_JOIN_ROLES = [
+    'member',
+    'caregiver',
+    'viewer',
+  ];
 
   /** 生成6位邀请码（带碰撞重试） */
   private async generateUniqueInviteCode(): Promise<string> {
@@ -115,7 +119,9 @@ export class FamilyService {
   /** 加入家庭 */
   async joinFamily(userId: string, code: string, role: string) {
     // 角色白名单校验
-    const safeRole = FamilyService.ALLOWED_JOIN_ROLES.includes(role) ? role : 'member';
+    const safeRole = FamilyService.ALLOWED_JOIN_ROLES.includes(role)
+      ? role
+      : 'member';
 
     const family = await this.prisma.family.findFirst({
       where: {
@@ -281,11 +287,7 @@ export class FamilyService {
   }
 
   /** 移除家庭成员 */
-  async removeMember(
-    familyId: string,
-    memberId: string,
-    operatorId: string,
-  ) {
+  async removeMember(familyId: string, memberId: string, operatorId: string) {
     // 校验操作者是否为该家庭的 owner
     const operator = await this.prisma.familyMember.findUnique({
       where: {
@@ -322,5 +324,54 @@ export class FamilyService {
     });
 
     return { message: '成员已移除' };
+  }
+
+  /** 更新成员数据可见性配置 */
+  async updateMemberVisibility(
+    familyId: string,
+    memberId: string,
+    operatorId: string,
+    visibility: Record<string, string>,
+  ) {
+    const member = await this.prisma.familyMember.findUnique({
+      where: {
+        familyId_userId: { familyId, userId: memberId },
+      },
+    });
+    if (!member) {
+      throw new NotFoundException('该成员不存在');
+    }
+
+    // 只有自己或 owner 可以修改
+    if (memberId !== operatorId) {
+      const operator = await this.prisma.familyMember.findUnique({
+        where: {
+          familyId_userId: { familyId, userId: operatorId },
+        },
+      });
+      if (!operator || operator.role !== 'owner') {
+        throw new BadRequestException('无权修改该成员的隐私设置');
+      }
+    }
+
+    const allowed = ['all', 'summary', 'none'];
+    const filtered: Record<string, string> = {};
+    for (const [key, value] of Object.entries(visibility)) {
+      if (
+        ['bp', 'bg', 'medication', 'diet'].includes(key) &&
+        allowed.includes(value)
+      ) {
+        filtered[key] = value;
+      }
+    }
+
+    await this.prisma.familyMember.update({
+      where: {
+        familyId_userId: { familyId, userId: memberId },
+      },
+      data: { visibility: filtered },
+    });
+
+    return { message: '隐私设置已更新' };
   }
 }

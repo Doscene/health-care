@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.healthcare.family.data.remote.api.DailyMenuDto
 import com.healthcare.family.data.remote.api.RecipeDto
+import com.healthcare.family.data.remote.api.ShoppingListDto
 import com.healthcare.family.data.remote.api.SubstitutionDto
 import com.healthcare.family.data.repository.DietRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -19,8 +20,10 @@ data class DietUiState(
     val dailyMenu: DailyMenuDto? = null,
     val substitution: SubstitutionDto? = null,
     val selectedRecipe: RecipeDto? = null,
+    val shoppingList: ShoppingListDto? = null,
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
+    val recordSuccess: Boolean = false,
 )
 
 @HiltViewModel
@@ -73,5 +76,38 @@ class DietViewModel @Inject constructor(
                 onFailure = { e -> _uiState.update { it.copy(isLoading = false, errorMessage = e.message) } },
             )
         }
+    }
+
+    fun loadShoppingList() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+            dietRepository.getShoppingList().fold(
+                onSuccess = { list -> _uiState.update { it.copy(shoppingList = list, isLoading = false) } },
+                onFailure = { e -> _uiState.update { it.copy(isLoading = false, errorMessage = e.message) } },
+            )
+        }
+    }
+
+    fun checkShoppingItem(listId: String, itemIndex: Int, checked: Boolean) {
+        viewModelScope.launch {
+            dietRepository.checkShoppingItem(listId, itemIndex, checked).fold(
+                onSuccess = { list -> _uiState.update { it.copy(shoppingList = list) } },
+                onFailure = { e -> _uiState.update { it.copy(errorMessage = e.message) } },
+            )
+        }
+    }
+
+    fun recordDiet(mealType: String, description: String) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+            dietRepository.recordDiet(mealType, description).fold(
+                onSuccess = { _uiState.update { it.copy(isLoading = false, recordSuccess = true) } },
+                onFailure = { e -> _uiState.update { it.copy(isLoading = false, errorMessage = e.message) } },
+            )
+        }
+    }
+
+    fun clearRecordState() {
+        _uiState.update { it.copy(recordSuccess = false) }
     }
 }
